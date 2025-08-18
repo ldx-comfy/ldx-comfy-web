@@ -1,11 +1,39 @@
 ---
 import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
+import ImageUploader from '../components/ImageUploader.astro';
+import PromptInput from '../components/PromptInput.astro';
+import ToggleWithText from '../components/ToggleWithText.astro';
 
 // Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
 <Layout>
-	<Welcome />
-</Layout>
+	<div class="outer-frame">
+		<div class="uploader-container">
+			<ToggleWithText text="Your text here" />
+		</div>
+	</div>
+</Layout> 
+
+<style>
+	.outer-frame {
+		width: 300px;
+		height: 200px;
+		border-radius: 32px;
+		background-color: #f0f0f0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		margin: 40px auto;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	}
+	
+	.uploader-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+</style>
+

@@ -1,0 +1,170 @@
+---
+// src/components/ImageUploader.astro
+---
+<div id="upload-box" class="upload-box">
+  <div class="upload-content">
+    <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 8l-5-5-5 5" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 3v12" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <p>拖曳圖片至此或<strong>點擊上傳</strong></p>
+  </div>
+  <img id="image-preview" class="image-preview" src="" alt="Image preview" hidden />
+  <input type="file" id="file-input" accept="image/*" hidden />
+</div>
+
+<style>
+  .upload-box {
+    width: 250px;
+    height: 250px;
+    border: 2px dashed #d9d9d9;
+    border-radius: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    background-color: #fafafa;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Blue outline */
+  }
+
+  .upload-box:hover {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+  }
+
+  .upload-box.dragover {
+    border-style: solid;
+    border-color: #007bff;
+    background-color: #e6f7ff;
+  }
+  
+  .upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #888;
+    z-index: 1; /* Ensure content is above preview */
+  }
+
+  .upload-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .upload-content strong {
+    color: #007bff;
+  }
+
+  .upload-icon path {
+    transition: stroke 0.3s ease;
+  }
+
+  .upload-box:hover .upload-icon path,
+  .upload-box.dragover .upload-icon path {
+    stroke: #007bff;
+  }
+
+  .image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0; /* Behind content initially */
+  }
+
+  /* When preview is shown, hide content and make preview interactive */
+  .upload-box.preview-shown .upload-content {
+    display: none;
+  }
+
+  .upload-box.preview-shown .image-preview {
+    z-index: 1; /* Bring preview to front */
+  }
+</style>
+
+<script>
+  const uploadBox = document.getElementById('upload-box');
+  const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+  const imagePreview = document.getElementById('image-preview') as HTMLImageElement | null;
+  const uploadContent = uploadBox?.querySelector('.upload-content');
+
+  function handleFiles(files: FileList) {
+    if (files.length === 0) return;
+    const file = files[0];
+
+    // Check if the file is an image
+    if (!file.type.startsWith('image/')){
+      alert('請上傳圖片檔案');
+      return;
+    }
+
+    // Display image preview
+    if (imagePreview && uploadContent) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        imagePreview.src = reader.result as string;
+        imagePreview.hidden = false;
+        uploadContent.setAttribute('hidden', 'true');
+        // Add class to indicate preview is shown
+        uploadBox?.classList.add('preview-shown');
+      }
+      reader.readAsDataURL(file);
+    }
+
+    // You can also proceed with uploading the file to a server here.
+    console.log(`File selected: ${file.name}, size: ${file.size} bytes`);
+
+    // Reset file input if needed
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  }
+
+  if (uploadBox && fileInput) {
+    // Trigger file input click
+    uploadBox.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // Handle file selection
+    fileInput.addEventListener('change', (event) => {
+      const files = (event.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        handleFiles(files);
+      }
+    });
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      uploadBox.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e: Event) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // Highlight drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+      uploadBox.addEventListener(eventName, () => uploadBox.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      uploadBox.addEventListener(eventName, () => uploadBox.classList.remove('dragover'), false);
+    });
+
+    // Handle dropped files
+    uploadBox.addEventListener('drop', (event) => {
+      const dt = (event as DragEvent).dataTransfer;
+      if (dt) {
+        const files = dt.files;
+        handleFiles(files);
+      }
+    }, false);
+  }
+</script>
