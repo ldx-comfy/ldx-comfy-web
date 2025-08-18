@@ -1,5 +1,5 @@
 // src/api/workflows.ts
-interface WorkflowParam {
+export interface WorkflowParam {
   node_id: string;
   title: string;
   class_type: string;

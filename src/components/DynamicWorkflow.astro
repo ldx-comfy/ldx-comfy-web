@@ -1,0 +1,69 @@
+---
+// src/components/DynamicWorkflow.astro
+import ImageUploader from './ImageUploader.astro';
+import PromptInput from './PromptInput.astro';
+import ToggleWithText from './ToggleWithText.astro';
+
+interface WorkflowParam {
+  node_id: string;
+  title: string;
+  class_type: string;
+}
+
+interface Props {
+  params: WorkflowParam[];
+}
+
+const { params = [] } = Astro.props;
+---
+
+<div class="workflow-container">
+  {
+    params.map((param) => (
+      <div class="component-wrapper">
+        {(() => {
+          if (param.class_type === 'LoadImageOutput') {
+            return <ImageUploader />;
+          } else if (param.class_type === 'Text') {
+            return <PromptInput placeholder={param.title} />;
+          } else if (param.class_type === 'Switch any [Crystools]') {
+            return <ToggleWithText text={param.title} />;
+          } else {
+            return (
+              <div class="unknown-component">
+                <p>未知組件類型: {param.class_type}</p>
+                <p>節點ID: {param.node_id}</p>
+                <p>標題: {param.title}</p>
+              </div>
+            );
+          }
+        })()}
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .workflow-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .component-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .unknown-component {
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+    color: #495057;
+  }
+</style>
