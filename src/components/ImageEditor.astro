@@ -114,12 +114,15 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   }
 
   .tool-btn {
-    padding: 8px 16px;
+    padding: 12px 20px;
     border: 1px solid #ddd;
     background: white;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 44px; /* iOS touch target minimum */
+    min-width: 44px;
   }
 
   .tool-btn:hover {
@@ -190,12 +193,14 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   }
 
   .action-btn {
-    padding: 10px 20px;
+    padding: 14px 24px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
     transition: all 0.2s;
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 44px; /* iOS touch target minimum */
   }
 
   .action-btn.cancel {
@@ -214,6 +219,81 @@ const { imageSrc = '', isOpen = false } = Astro.props;
 
   .action-btn.save:hover {
     background-color: #218838;
+  }
+
+  /* Tablet and mobile optimizations */
+  @media (max-width: 768px) {
+    .editor-container {
+      max-width: 95vw;
+      max-height: 95vh;
+      margin: 10px;
+    }
+
+    .editor-toolbar {
+      padding: 12px 15px;
+      gap: 8px;
+    }
+
+    .draw-options {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .draw-options label {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .draw-options input[type="range"] {
+      width: 100%;
+      height: 6px;
+    }
+
+    .draw-options input[type="color"] {
+      width: 50px;
+      height: 50px;
+    }
+
+    .editor-canvas-container {
+      padding: 15px;
+      min-height: 300px;
+      max-height: 50vh;
+    }
+
+    .editor-actions {
+      padding: 15px;
+      gap: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 16px;
+    }
+  }
+
+  /* Touch device specific styles */
+  @media (hover: none) and (pointer: coarse) {
+    .tool-btn:active,
+    .action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .close-btn:active {
+      background-color: #f0f0f0;
+      transform: scale(0.95);
+    }
+
+    /* Increase touch targets for better accessibility */
+    .draw-options input[type="range"] {
+      height: 8px;
+    }
+
+    .draw-options input[type="color"] {
+      width: 48px;
+      height: 48px;
+    }
   }
 </style>
 
@@ -278,12 +358,19 @@ const { imageSrc = '', isOpen = false } = Astro.props;
         this.brushOpacity = parseFloat((e.target as HTMLInputElement).value);
       });
 
-      // Canvas events
+      // Canvas events - Mouse and Touch support
       if (this.canvas) {
+        // Mouse events
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
         this.canvas.addEventListener('mouseout', () => this.handleMouseUp());
+
+        // Touch events for tablet support
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+        this.canvas.addEventListener('touchend', () => this.handleTouchEnd());
+        this.canvas.addEventListener('touchcancel', () => this.handleTouchEnd());
       }
 
       // Save button
@@ -396,6 +483,52 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     }
 
     private handleMouseUp() {
+      this.isDrawing = false;
+      if (this.ctx) {
+        this.ctx.beginPath();
+        this.ctx.globalAlpha = 1; // Reset alpha
+      }
+    }
+
+    private handleTouchStart(e: TouchEvent) {
+      e.preventDefault(); // Prevent scrolling and other default behaviors
+      if (!this.canvas) return;
+
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+
+      if (this.currentTool === 'draw') {
+        this.isDrawing = true;
+        if (this.ctx) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x, y);
+          this.ctx.strokeStyle = this.brushColor;
+          this.ctx.lineWidth = this.brushSize;
+          this.ctx.lineCap = 'round';
+          this.ctx.lineJoin = 'round';
+          this.ctx.globalAlpha = this.brushOpacity;
+        }
+      }
+    }
+
+    private handleTouchMove(e: TouchEvent) {
+      e.preventDefault(); // Prevent scrolling
+      if (!this.canvas || !this.isDrawing) return;
+
+      const touch = e.touches[0];
+      const rect = this.canvas.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+
+      if (this.currentTool === 'draw' && this.isDrawing && this.ctx) {
+        this.ctx.lineTo(x, y);
+        this.ctx.stroke();
+      }
+    }
+
+    private handleTouchEnd() {
       this.isDrawing = false;
       if (this.ctx) {
         this.ctx.beginPath();

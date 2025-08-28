@@ -109,6 +109,56 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
+
+  /* Tablet and mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .upload-box {
+      width: 200px;
+      height: 200px;
+      border-radius: 16px;
+    }
+
+    .upload-content p {
+      font-size: 12px;
+    }
+
+    .upload-icon {
+      width: 36px;
+      height: 36px;
+    }
+
+    .edit-btn {
+      padding: 6px 10px;
+      font-size: 12px;
+      min-height: 36px;
+      min-width: 36px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .upload-box {
+      width: 180px;
+      height: 180px;
+    }
+
+    .edit-btn {
+      top: 5px;
+      right: 5px;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+  }
+
+  /* Touch device specific styles */
+  @media (hover: none) and (pointer: coarse) {
+    .edit-btn:active {
+      transform: scale(0.95);
+    }
+
+    .upload-box:active {
+      transform: scale(0.98);
+    }
+  }
 </style>
 
 <script>
