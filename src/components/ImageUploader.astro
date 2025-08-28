@@ -1,4 +1,4 @@
----
+83---
 // src/components/ImageUploader.astro
 ---
 <div id="upload-box" class="upload-box">
@@ -7,6 +7,7 @@
     <p>拖曳圖片至此或<strong>點擊上傳</strong></p>
   </div>
   <img id="image-preview" class="image-preview" src="" alt="Image preview" hidden />
+  <button id="edit-btn" class="edit-btn" hidden>編輯</button>
   <input type="file" id="file-input" accept="image/*" hidden />
 </div>
 
@@ -85,12 +86,36 @@
   .upload-box.preview-shown .image-preview {
     z-index: 1; /* Bring preview to front */
   }
+
+  .edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 123, 255, 0.9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 2;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .edit-btn:hover {
+    background-color: rgba(0, 123, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
 </style>
 
 <script>
   const uploadBox = document.getElementById('upload-box');
   const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
   const imagePreview = document.getElementById('image-preview') as HTMLImageElement | null;
+  const editBtn = document.getElementById('edit-btn') as HTMLButtonElement | null;
   const uploadContent = uploadBox?.querySelector('.upload-content');
 
   function handleFiles(files: FileList) {
@@ -110,6 +135,10 @@
         imagePreview.src = reader.result as string;
         imagePreview.hidden = false;
         uploadContent.setAttribute('hidden', 'true');
+        // Show edit button
+        if (editBtn) {
+          editBtn.hidden = false;
+        }
         // Add class to indicate preview is shown
         uploadBox?.classList.add('preview-shown');
       }
@@ -167,4 +196,24 @@
       }
     }, false);
   }
+
+  // Handle edit button click
+  if (editBtn) {
+    editBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent triggering upload box click
+      if (imagePreview && imagePreview.src) {
+        // Open image editor
+        if (window.imageEditor) {
+          window.imageEditor.open(imagePreview.src);
+        }
+      }
+    });
+  }
+
+  // Handle edited image
+  document.addEventListener('imageEdited', (event: any) => {
+    if (imagePreview && event.detail?.imageData) {
+      imagePreview.src = event.detail.imageData;
+    }
+  });
 </script>

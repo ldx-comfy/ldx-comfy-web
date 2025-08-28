@@ -1,0 +1,440 @@
+---
+// src/components/ImageEditor.astro
+interface Props {
+  imageSrc?: string;
+  isOpen?: boolean;
+}
+
+const { imageSrc = '', isOpen = false } = Astro.props;
+---
+
+<div id="image-editor-modal" class="editor-modal" style={isOpen ? '' : 'display: none;'}>
+  <div class="editor-overlay" id="editor-overlay"></div>
+  <div class="editor-container">
+    <div class="editor-header">
+      <h3>編輯圖片</h3>
+      <button id="close-editor" class="close-btn">×</button>
+    </div>
+
+    <div class="editor-toolbar">
+      <button id="draw-btn" class="tool-btn active">塗鴉</button>
+      <div class="draw-options" id="draw-options" style="display: flex;">
+        <label>筆刷大小:</label>
+        <input type="range" id="brush-size" min="1" max="20" value="3">
+        <label>顏色:</label>
+        <input type="color" id="brush-color" value="#ff0000">
+        <label>透明度:</label>
+        <input type="range" id="brush-opacity" min="0.1" max="1" step="0.1" value="1">
+      </div>
+      <button id="reset-btn" class="tool-btn">重置</button>
+    </div>
+
+    <div class="editor-canvas-container">
+      <canvas id="editor-canvas" class="editor-canvas"></canvas>
+    </div>
+
+    <div class="editor-actions">
+      <button id="cancel-edit" class="action-btn cancel">取消</button>
+      <button id="save-edit" class="action-btn save">儲存</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+  }
+
+  .editor-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .editor-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .editor-header h3 {
+    margin: 0;
+    color: #333;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+
+  .close-btn:hover {
+    background-color: #f0f0f0;
+  }
+
+  .editor-toolbar {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .tool-btn {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tool-btn:hover {
+    background-color: #f5f5f5;
+  }
+
+  .tool-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+
+  .draw-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+  }
+
+  .draw-options label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+  }
+
+  .draw-options input[type="range"] {
+    width: 60px;
+  }
+
+  .draw-options input[type="color"] {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+
+  .editor-canvas-container {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    max-height: 60vh;
+    overflow: auto;
+  }
+
+  .editor-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: crosshair;
+  }
+
+  .editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .action-btn.cancel {
+    background-color: #6c757d;
+    color: white;
+  }
+
+  .action-btn.cancel:hover {
+    background-color: #5a6268;
+  }
+
+  .action-btn.save {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .action-btn.save:hover {
+    background-color: #218838;
+  }
+</style>
+
+<script>
+  class ImageEditor {
+    private modal: HTMLElement | null = null;
+    private canvas: HTMLCanvasElement | null = null;
+    private ctx: CanvasRenderingContext2D | null = null;
+    private originalImage: HTMLImageElement | null = null;
+    private isDrawing = false;
+    private currentTool: 'draw' = 'draw';
+    private brushSize = 3;
+    private brushColor = '#ff0000';
+    private brushOpacity = 1;
+
+    constructor() {
+      this.init();
+    }
+
+    private init() {
+      this.modal = document.getElementById('image-editor-modal');
+      this.canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
+
+      if (this.canvas) {
+        this.ctx = this.canvas.getContext('2d');
+      }
+
+      this.setupEventListeners();
+    }
+
+    private setupEventListeners() {
+      // Close modal
+      const closeBtn = document.getElementById('close-editor');
+      const cancelBtn = document.getElementById('cancel-edit');
+      const overlay = document.getElementById('editor-overlay');
+
+      [closeBtn, cancelBtn, overlay].forEach(btn => {
+        btn?.addEventListener('click', () => this.close());
+      });
+
+      // Tool buttons
+      const drawBtn = document.getElementById('draw-btn');
+      const resetBtn = document.getElementById('reset-btn');
+
+      drawBtn?.addEventListener('click', () => this.setTool('draw'));
+      resetBtn?.addEventListener('click', () => this.reset());
+
+      // Brush controls
+      const brushSizeInput = document.getElementById('brush-size') as HTMLInputElement;
+      const brushColorInput = document.getElementById('brush-color') as HTMLInputElement;
+      const brushOpacityInput = document.getElementById('brush-opacity') as HTMLInputElement;
+
+      brushSizeInput?.addEventListener('input', (e) => {
+        this.brushSize = parseInt((e.target as HTMLInputElement).value);
+      });
+
+      brushColorInput?.addEventListener('input', (e) => {
+        this.brushColor = (e.target as HTMLInputElement).value;
+      });
+
+      brushOpacityInput?.addEventListener('input', (e) => {
+        this.brushOpacity = parseFloat((e.target as HTMLInputElement).value);
+      });
+
+      // Canvas events
+      if (this.canvas) {
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+        this.canvas.addEventListener('mouseout', () => this.handleMouseUp());
+      }
+
+      // Save button
+      const saveBtn = document.getElementById('save-edit');
+      saveBtn?.addEventListener('click', () => this.save());
+    }
+
+    public open(imageSrc: string) {
+      if (!this.modal || !this.canvas || !this.ctx) return;
+
+      this.modal.style.display = 'block';
+
+      // Load image
+      this.originalImage = new Image();
+      this.originalImage.onload = () => {
+        this.resizeCanvas();
+        this.drawImage();
+      };
+      this.originalImage.src = imageSrc;
+    }
+
+    public close() {
+      if (this.modal) {
+        this.modal.style.display = 'none';
+      }
+      this.reset();
+    }
+
+    private resizeCanvas() {
+      if (!this.canvas || !this.originalImage) return;
+
+      const maxWidth = 800;
+      const maxHeight = 600;
+
+      let { width, height } = this.originalImage;
+
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height;
+        height = maxHeight;
+      }
+
+      this.canvas.width = width;
+      this.canvas.height = height;
+    }
+
+    private drawImage() {
+      if (!this.ctx || !this.originalImage || !this.canvas) return;
+
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.drawImage(this.originalImage, 0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    private setTool(tool: 'draw') {
+      this.currentTool = tool;
+
+      // Update button states
+      const drawBtn = document.getElementById('draw-btn');
+      const drawOptions = document.getElementById('draw-options');
+
+      drawBtn?.classList.toggle('active', tool === 'draw');
+
+      // Show/hide options
+      if (drawOptions) {
+        drawOptions.style.display = tool === 'draw' ? 'flex' : 'none';
+      }
+
+      // Update cursor
+      if (this.canvas) {
+        this.canvas.style.cursor = 'pointer';
+      }
+    }
+
+    private handleMouseDown(e: MouseEvent) {
+      if (!this.canvas) return;
+
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (this.currentTool === 'draw') {
+        this.isDrawing = true;
+        if (this.ctx) {
+          this.ctx.beginPath();
+          this.ctx.moveTo(x, y);
+          this.ctx.strokeStyle = this.brushColor;
+          this.ctx.lineWidth = this.brushSize;
+          this.ctx.lineCap = 'round';
+          this.ctx.lineJoin = 'round';
+          this.ctx.globalAlpha = this.brushOpacity;
+        }
+      }
+    }
+
+    private handleMouseMove(e: MouseEvent) {
+      if (!this.canvas || !this.isDrawing) return;
+
+      const rect = this.canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (this.currentTool === 'draw' && this.isDrawing && this.ctx) {
+        this.ctx.lineTo(x, y);
+        this.ctx.stroke();
+      }
+    }
+
+    private handleMouseUp() {
+      this.isDrawing = false;
+      if (this.ctx) {
+        this.ctx.beginPath();
+        this.ctx.globalAlpha = 1; // Reset alpha
+      }
+    }
+
+    private reset() {
+      this.drawImage();
+    }
+
+
+    private save() {
+      if (!this.canvas) return;
+
+      // Get the edited image as data URL
+      const editedImageData = this.canvas.toDataURL('image/png');
+
+      // Here you would typically send this to the parent component
+      // For now, we'll just close the editor
+      this.close();
+
+      // Dispatch custom event with the edited image
+      const event = new CustomEvent('imageEdited', {
+        detail: { imageData: editedImageData }
+      });
+      document.dispatchEvent(event);
+    }
+  }
+
+  // Initialize editor when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    window.imageEditor = new ImageEditor();
+  });
+
+  // Global reference for opening the editor
+  declare global {
+    interface Window {
+      imageEditor: ImageEditor;
+    }
+  }
+</script>

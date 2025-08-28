@@ -1,6 +1,7 @@
 ---
 // src/components/DynamicWorkflow.astro
 import ImageUploader from './ImageUploader.astro';
+import ImageEditor from './ImageEditor.astro';
 import PromptInput from './PromptInput.astro';
 import ToggleWithText from './ToggleWithText.astro';
 
@@ -16,6 +17,9 @@ interface Props {
 
 const { params = [] } = Astro.props;
 ---
+
+<!-- Image Editor Modal -->
+<ImageEditor />
 
 <div class="workflow-container">
   {
