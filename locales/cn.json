@@ -1,0 +1,36 @@
+{
+  "imageeditor": {
+    "title": "编辑图片",
+    "draw": "涂鸦",
+    "brushSize": "笔刷大小",
+    "color": "颜色",
+    "opacity": "透明度",
+    "reset": "重置",
+    "cancel": "取消",
+    "save": "保存"
+  },
+  "imageuploader": {
+    "uploadText": "拖曳图片至此或点击上传",
+    "editButton": "编辑",
+    "alertMessage": "请上传图片文件"
+  },
+  "promptinput": {
+    "title": "提示词输入框",
+    "placeholder": "请输入提示词...",
+    "submit": "提交"
+  },
+  "sidebar": {
+    "appName": "我的应用程序",
+    "home": "首页",
+    "about": "关于我们",
+    "contact": "联系我们"
+  },
+  "togglewithtext": {
+    "toggleText": "切换"
+  },
+  "dynamicworkflow": {
+    "unknownComponent": "未知组件类型",
+    "nodeId": "节点ID",
+    "title": "标题"
+  }
+}

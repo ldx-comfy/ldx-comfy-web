@@ -1,0 +1,36 @@
+{
+  "imageeditor": {
+    "title": "Éditeur d'Image",
+    "draw": "Dessiner",
+    "brushSize": "Taille du pinceau",
+    "color": "Couleur",
+    "opacity": "Opacité",
+    "reset": "Réinitialiser",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "imageuploader": {
+    "uploadText": "Glissez l'image ici ou cliquez pour télécharger",
+    "editButton": "Éditer",
+    "alertMessage": "Veuillez télécharger un fichier image"
+  },
+  "promptinput": {
+    "title": "Saisie de Prompt",
+    "placeholder": "Veuillez saisir le prompt...",
+    "submit": "Soumettre"
+  },
+  "sidebar": {
+    "appName": "Mon Application",
+    "home": "Accueil",
+    "about": "À Propos",
+    "contact": "Contact"
+  },
+  "togglewithtext": {
+    "toggleText": "Basculer"
+  },
+  "dynamicworkflow": {
+    "unknownComponent": "Type de composant inconnu",
+    "nodeId": "ID du nœud",
+    "title": "Titre"
+  }
+}

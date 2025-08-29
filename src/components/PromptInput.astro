@@ -1,4 +1,6 @@
 ---
+import { getTranslator } from '@gudupao/astro-i18n';
+
 interface Props {
   placeholder?: string;
   initialValue?: string;
@@ -7,20 +9,24 @@ interface Props {
 }
 
 const { placeholder = "請輸入提示詞...", initialValue = "", rows = 4, maxLength = 500 } = Astro.props;
+
+// Get language from params or cookie
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
 ---
 
 <div class="prompt-card">
   
   <div class="header">
-    <h2 class="title">提示詞輸入框</h2>
+    <h2 class="title">{t('promptinput.title')}</h2>
   </div>
 
   
 
-  <textarea 
+  <textarea
     id="prompt-input"
     name="prompt"
-    placeholder={placeholder}
+    placeholder={t('promptinput.placeholder')}
     rows={rows}
     maxlength={maxLength}
     class="prompt-textarea"

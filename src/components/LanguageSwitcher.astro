@@ -1,0 +1,267 @@
+---
+// Define available languages manually
+const availableLanguages = ['en',  'cn', 'hk', 'jp', 'fr'];
+
+interface Props {
+  pathBasedRouting?: boolean; // Whether to use path-based routing mode
+}
+
+const { pathBasedRouting = true } = Astro.props;
+
+// Function to detect current language
+function detectCurrentLanguage() {
+  // First check URL parameters
+  const urlParams = new URLSearchParams(Astro.url.search);
+  const langParam = urlParams.get('lang');
+  if (langParam) return langParam;
+
+  // Then check Cookie
+  const cookies = Astro.request.headers.get('cookie');
+  if (cookies) {
+    const cookieObj = Object.fromEntries(
+      cookies.split(';').map(cookie => {
+        const [name, value] = cookie.trim().split('=');
+        return [name, decodeURIComponent(value)];
+      })
+    );
+    if (cookieObj.lang) return cookieObj.lang;
+ }
+
+  // Return default language
+  return 'en';
+}
+
+// Get current language
+const currentLang = detectCurrentLanguage();
+---
+
+<div class="language-switcher">
+  <div class="current-language" onclick="toggleLanguageMenu()">
+    <span class="current-lang-text">
+      {currentLang === 'en' && 'English'}
+      {currentLang === 'cn' && '简体中文'}
+      {currentLang === 'hk' && '繁體中文'}
+      {currentLang === 'jp' && '日本語'}
+      {currentLang === 'fr' && 'Français'}
+      {currentLang !== 'en'  && currentLang !== 'cn' && currentLang !== 'hk' && currentLang !== 'jp' && currentLang !== 'fr' && currentLang}
+    </span>
+    <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 14l5-5 5 5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="language-menu" id="languageMenu">
+    {availableLanguages.map((language) => (
+      <button
+        data-lang={language}
+        class={language === currentLang ? 'active' : ''}
+        onclick={`switchLanguage('${language}', ${pathBasedRouting})`}
+      >
+        {language === 'en' && 'English'}
+        {language === 'cn' && '简体中文'}
+        {language === 'hk' && '繁體中文'}
+        {language === 'jp' && '日本語'}
+        {language === 'fr' && 'Français'}
+        {language !== 'en' && language !== 'cn' && language !== 'hk' && language !== 'jp' && language !== 'fr' && language}
+      </button>
+    ))}
+  </div>
+</div>
+
+<script is:inline>
+  // Function to switch language
+  function switchLanguage(language, pathBasedRouting) {
+    if (pathBasedRouting) {
+      // Path-based routing mode
+      // Set language Cookie
+      document.cookie = `lang=${language}; path=/; max-age=31536000; samesite=lax`;
+      console.log('[LanguageSwitcher] Set language Cookie:', language);
+
+      const urlParts = window.location.pathname.split('/');
+      urlParts[1] = language;
+      window.location.href = urlParts.join('/');
+    } else {
+      // Path-less routing mode
+      // Set language Cookie
+      document.cookie = `lang=${language}; path=/; max-age=31536000; samesite=lax`;
+      // Set localStorage
+      localStorage.setItem('lang', language);
+      // Reload the page to apply the new language
+      window.location.reload();
+    }
+  }
+
+  // Function to toggle language menu
+  function toggleLanguageMenu() {
+    const menu = document.getElementById('languageMenu');
+    const icon = document.querySelector('.dropdown-icon');
+    if (menu && icon) {
+      menu.classList.toggle('open');
+      icon.classList.toggle('rotated');
+    }
+  }
+
+  // Close menu when clicking outside
+  document.addEventListener('click', function(event) {
+    const switcher = document.querySelector('.language-switcher');
+    const menu = document.getElementById('languageMenu');
+    const icon = document.querySelector('.dropdown-icon');
+
+    if (switcher && menu && icon && !switcher.contains(event.target)) {
+      menu.classList.remove('open');
+      icon.classList.remove('rotated');
+    }
+  });
+</script>
+
+<style>
+.language-switcher {
+  position: relative;
+  width: 220px;
+  margin: 20px 0;
+}
+
+.current-language {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #333333;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.current-language::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.1), transparent);
+  transition: left 0.6s;
+}
+
+.current-language:hover::before {
+  left: 100%;
+}
+
+.current-language:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 123, 255, 0.2);
+}
+
+.current-lang-text {
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-icon {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #666666;
+  position: relative;
+  z-index: 2;
+}
+
+.dropdown-icon.rotated {
+  transform: rotate(180deg) scale(1.1);
+  color: #0056b3;
+}
+
+.language-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 12px;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.language-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.language-menu button {
+  width: 100%;
+  padding: 14px 18px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 15px;
+  font-weight: 500;
+  position: relative;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.language-menu button:last-child {
+  border-bottom: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.language-menu button:first-child {
+  border-radius: 12px 12px 0 0;
+}
+
+.language-menu button:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #4f46e5;
+  transform: translateX(4px);
+}
+
+.language-menu button.active {
+  background: rgba(0, 123, 255, 0.1);
+  color: #0056b3;
+  font-weight: 600;
+  border-left: 3px solid #0056b3;
+}
+
+.language-menu button.active::after {
+  content: '✓';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #0056b3;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .language-switcher {
+    width: 200px;
+  }
+
+  .current-language {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .language-menu button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}

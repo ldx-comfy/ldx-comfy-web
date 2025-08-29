@@ -1,0 +1,36 @@
+{
+  "imageeditor": {
+    "title": "Edit Image",
+    "draw": "Draw",
+    "brushSize": "Brush Size",
+    "color": "Color",
+    "opacity": "Opacity",
+    "reset": "Reset",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "imageuploader": {
+    "uploadText": "Drag image here or click to upload",
+    "editButton": "Edit",
+    "alertMessage": "Please upload an image file"
+  },
+  "promptinput": {
+    "title": "Prompt Input",
+    "placeholder": "Please enter prompt...",
+    "submit": "Submit"
+  },
+  "sidebar": {
+    "appName": "App Name",
+    "home": "Home",
+    "about": "About Us",
+    "contact": "Contact Us"
+  },
+  "togglewithtext": {
+    "toggleText": "Toggle"
+  },
+  "dynamicworkflow": {
+    "unknownComponent": "Unknown component type",
+    "nodeId": "Node ID",
+    "title": "Title"
+  }
+}

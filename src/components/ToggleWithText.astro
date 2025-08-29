@@ -1,4 +1,6 @@
 ---
+import { getTranslator } from '@gudupao/astro-i18n';
+
 interface Props {
   text: string;
   initialState?: boolean;
@@ -6,6 +8,10 @@ interface Props {
 
 const { text, initialState = false } = Astro.props;
 let isChecked = initialState;
+
+// Get language from params or cookie
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
 ---
 
 <div class="toggle-container">
@@ -13,7 +19,7 @@ let isChecked = initialState;
     <input type="checkbox" checked={isChecked} />
     <span class="slider"></span>
   </label>
-  <span class="toggle-text">{text}</span>
+  <span class="toggle-text">{t('togglewithtext.toggleText')}</span>
 </div>
 
 <style>

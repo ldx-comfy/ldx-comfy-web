@@ -4,7 +4,11 @@ interface Props {
   imageSrc?: string;
   isOpen?: boolean;
 }
+import { getTranslator } from '@gudupao/astro-i18n';
 
+// Get language from params or cookie
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
 const { imageSrc = '', isOpen = false } = Astro.props;
 ---
 
@@ -12,21 +16,21 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   <div class="editor-overlay" id="editor-overlay"></div>
   <div class="editor-container">
     <div class="editor-header">
-      <h3>編輯圖片</h3>
+      <h3>{t('imageeditor.title')}</h3>
       <button id="close-editor" class="close-btn">×</button>
     </div>
 
     <div class="editor-toolbar">
-      <button id="draw-btn" class="tool-btn active">塗鴉</button>
+      <button id="draw-btn" class="tool-btn active">{t('imageeditor.draw')}</button>
       <div class="draw-options" id="draw-options" style="display: flex;">
-        <label>筆刷大小:</label>
+        <label>{t('imageeditor.brushSize')}:</label>
         <input type="range" id="brush-size" min="1" max="20" value="3">
-        <label>顏色:</label>
+        <label>{t('imageeditor.color')}:</label>
         <input type="color" id="brush-color" value="#ff0000">
-        <label>透明度:</label>
+        <label>{t('imageeditor.opacity')}:</label>
         <input type="range" id="brush-opacity" min="0.1" max="1" step="0.1" value="1">
       </div>
-      <button id="reset-btn" class="tool-btn">重置</button>
+      <button id="reset-btn" class="tool-btn">{t('imageeditor.reset')}</button>
     </div>
 
     <div class="editor-canvas-container">
@@ -34,8 +38,8 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     </div>
 
     <div class="editor-actions">
-      <button id="cancel-edit" class="action-btn cancel">取消</button>
-      <button id="save-edit" class="action-btn save">儲存</button>
+      <button id="cancel-edit" class="action-btn cancel">{t('imageeditor.cancel')}</button>
+      <button id="save-edit" class="action-btn save">{t('imageeditor.save')}</button>
     </div>
   </div>
 </div>

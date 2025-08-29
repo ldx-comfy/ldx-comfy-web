@@ -1,0 +1,45 @@
+---
+// Disable prerendering to access request headers
+export const prerender = false;
+
+import { getAvailableLanguages, getTranslator } from '@gudupao/astro-i18n';
+
+// Get all available languages
+const availableLanguages = getAvailableLanguages();
+console.log('Available languages:', availableLanguages);
+
+// Test translator
+const t = getTranslator('en');
+try {
+  const title = t('imageeditor.title');
+  console.log('Translation found:', title);
+} catch (error) {
+  console.error('Translation error:', error instanceof Error ? error.message : 'Unknown error');
+}
+
+// Test translator for Chinese
+try {
+  const tcn = getTranslator('cn');
+  const title = tcn('imageeditor.title');
+  console.log('Chinese translation found:', title);
+} catch (error) {
+  console.error('Chinese translation error:', error instanceof Error ? error.message : 'Unknown error');
+}
+---
+
+<div class="test-page">
+ <h1>Language Test Page</h1>
+  <p>Available languages: {JSON.stringify(availableLanguages)}</p>
+  <p>Check the console for translation results.</p>
+</div>
+
+<style>
+  .test-page {
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  .test-page h1 {
+    color: #333;
+  }
+</style>

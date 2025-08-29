@@ -1,14 +1,23 @@
-83---
+---
 // src/components/ImageUploader.astro
+import { getTranslator } from '@gudupao/astro-i18n';
+
+// Get language from params or cookie
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
 ---
 <div id="upload-box" class="upload-box">
   <div class="upload-content">
     <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 8l-5-5-5 5" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 3v12" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-    <p>拖曳圖片至此或<strong>點擊上傳</strong></p>
+    <p>{t('imageuploader.uploadText')}</p>
   </div>
   <img id="image-preview" class="image-preview" src="" alt="Image preview" hidden />
-  <button id="edit-btn" class="edit-btn" hidden>編輯</button>
+  <button id="edit-btn" class="edit-btn" hidden>{t('imageuploader.editButton')}</button>
   <input type="file" id="file-input" accept="image/*" hidden />
+  <!-- Hidden element to store translated messages -->
+  <div id="translations" style="display: none;"
+       data-alert-message="{t('imageuploader.alertMessage')}">
+  </div>
 </div>
 
 <style>
@@ -174,7 +183,10 @@
 
     // Check if the file is an image
     if (!file.type.startsWith('image/')){
-      alert('請上傳圖片檔案');
+      // Get translated message from hidden element
+      const translationsElement = document.getElementById('translations');
+      const alertMessage = translationsElement?.getAttribute('data-alert-message') || 'Please upload an image file';
+      alert(alertMessage);
       return;
     }
 

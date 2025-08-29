@@ -4,9 +4,10 @@ import ImageUploader from './ImageUploader.astro';
 import ImageEditor from './ImageEditor.astro';
 import PromptInput from './PromptInput.astro';
 import ToggleWithText from './ToggleWithText.astro';
+import { getTranslator } from '@gudupao/astro-i18n';
 
 interface WorkflowParam {
-  node_id: string;
+ node_id: string;
   title: string;
   class_type: string;
 }
@@ -16,6 +17,10 @@ interface Props {
 }
 
 const { params = [] } = Astro.props;
+
+// Get language from params or cookie
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
 ---
 
 <!-- Image Editor Modal -->
@@ -35,9 +40,9 @@ const { params = [] } = Astro.props;
           } else {
             return (
               <div class="unknown-component">
-                <p>未知組件類型: {param.class_type}</p>
-                <p>節點ID: {param.node_id}</p>
-                <p>標題: {param.title}</p>
+                <p>{t('dynamicworkflow.unknownComponent')}: {param.class_type}</p>
+                <p>{t('dynamicworkflow.nodeId')}: {param.node_id}</p>
+                <p>{t('dynamicworkflow.title')}: {param.title}</p>
               </div>
             );
           }

@@ -1,0 +1,36 @@
+{
+  "imageeditor": {
+    "title": "画像編集",
+    "draw": "描画",
+    "brushSize": "ブラシサイズ",
+    "color": "色",
+    "opacity": "透明度",
+    "reset": "リセット",
+    "cancel": "キャンセル",
+    "save": "保存"
+  },
+  "imageuploader": {
+    "uploadText": "画像をここにドラッグするかクリックしてアップロード",
+    "editButton": "編集",
+    "alertMessage": "画像ファイルをアップロードしてください"
+  },
+  "promptinput": {
+    "title": "プロンプト入力",
+    "placeholder": "プロンプトを入力してください...",
+    "submit": "送信"
+  },
+  "sidebar": {
+    "appName": "アプリケーション",
+    "home": "ホーム",
+    "about": "私たちについて",
+    "contact": "お問い合わせ"
+  },
+  "togglewithtext": {
+    "toggleText": "切り替え"
+  },
+  "dynamicworkflow": {
+    "unknownComponent": "不明なコンポーネントタイプ",
+    "nodeId": "ノードID",
+    "title": "タイトル"
+  }
+}
