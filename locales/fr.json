@@ -25,6 +25,14 @@
     "about": "À Propos",
     "contact": "Contact"
   },
+  "theme": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "auto": "Automatique",
+    "lightTitle": "Thème Clair",
+    "darkTitle": "Thème Sombre",
+    "autoTitle": "Thème Automatique"
+  },
   "togglewithtext": {
     "toggleText": "Basculer"
   },

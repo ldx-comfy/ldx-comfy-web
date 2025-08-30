@@ -9,6 +9,25 @@ import Sidebar from '../components/Sidebar.astro';
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro Basics</title>
+		<script is:inline>
+			// Initialize theme immediately to prevent flash
+			(function() {
+				const savedTheme = localStorage.getItem('theme');
+				let theme = 'light';
+				
+				if (savedTheme) {
+					theme = savedTheme;
+				} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					theme = 'dark';
+				}
+				
+				if (theme === 'dark') {
+					document.documentElement.classList.add('dark-theme');
+				} else {
+					document.documentElement.classList.add('light-theme');
+				}
+			})();
+		</script>
 	</head>
 	<body>
 		<div class="layout">
@@ -21,13 +40,16 @@ import Sidebar from '../components/Sidebar.astro';
 </html>
 
 <style>
+/* CSS Variables are now defined in ThemeSwitcher.astro */
+
 	html,
 	body {
 		margin: 0;
 		width: 100%;
 		height: 100%;
-		background: #f0f2f5; /* A light grey background */
-		color: #333; /* Dark text color for readability */
+		background: var(--bg-primary);
+		color: var(--text-primary);
+		transition: background-color 0.3s ease, color 0.3s ease;
 	}
 
 	.layout {
@@ -39,6 +61,8 @@ import Sidebar from '../components/Sidebar.astro';
 		flex-grow: 1;
 		padding: 40px;
 		overflow-y: auto; /* Add scroll for content overflow */
+		background: var(--bg-primary);
+		transition: background-color 0.3s ease;
 	}
 
 	/* Tablet and mobile responsive adjustments */

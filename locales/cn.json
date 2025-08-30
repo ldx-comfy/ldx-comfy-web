@@ -25,6 +25,14 @@
     "about": "关于我们",
     "contact": "联系我们"
   },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "auto": "自动",
+    "lightTitle": "浅色主题",
+    "darkTitle": "深色主题",
+    "autoTitle": "自动主题"
+  },
   "togglewithtext": {
     "toggleText": "切换"
   },

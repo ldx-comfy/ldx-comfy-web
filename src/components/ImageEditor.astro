@@ -60,7 +60,7 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.8);
   }
 
   .editor-container {
@@ -68,9 +68,9 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: white;
+    background: var(--glass-bg);
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 30px var(--shadow-medium);
     max-width: 90vw;
     max-height: 90vh;
     display: flex;
@@ -82,12 +82,12 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .editor-header h3 {
     margin: 0;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .close-btn {
@@ -95,7 +95,7 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: #666;
+    color: var(--text-secondary);
     padding: 0;
     width: 30px;
     height: 30px;
@@ -107,20 +107,20 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   }
 
   .close-btn:hover {
-    background-color: #f0f0f0;
+    background: var(--bg-secondary);
   }
 
   .editor-toolbar {
     display: flex;
     gap: 10px;
     padding: 15px 20px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .tool-btn {
     padding: 12px 20px;
-    border: 1px solid #ddd;
-    background: white;
+    border: 1px solid var(--border-color);
+    background: var(--glass-bg);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
@@ -130,13 +130,13 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   }
 
   .tool-btn:hover {
-    background-color: #f5f5f5;
+    background: var(--bg-secondary);
   }
 
   .tool-btn.active {
-    background-color: #007bff;
+    background: var(--accent-color);
     color: white;
-    border-color: #007bff;
+    border-color: var(--accent-color);
   }
 
   .draw-options {
@@ -145,14 +145,14 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     gap: 10px;
     margin-top: 10px;
     padding: 10px;
-    background-color: #f8f9fa;
+    background: var(--bg-secondary);
     border-radius: 6px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
   }
 
   .draw-options label {
     font-size: 12px;
-    color: #666;
+    color: var(--text-secondary);
     white-space: nowrap;
   }
 
@@ -183,7 +183,7 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   .editor-canvas {
     max-width: 100%;
     max-height: 100%;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: crosshair;
   }
@@ -193,7 +193,7 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     justify-content: flex-end;
     gap: 10px;
     padding: 20px;
-    border-top: 1px solid #e0e0e0;
+    border-top: 1px solid var(--border-color);
   }
 
   .action-btn {
@@ -208,21 +208,21 @@ const { imageSrc = '', isOpen = false } = Astro.props;
   }
 
   .action-btn.cancel {
-    background-color: #6c757d;
+    background: var(--text-muted);
     color: white;
   }
 
   .action-btn.cancel:hover {
-    background-color: #5a6268;
+    background: var(--text-secondary);
   }
 
   .action-btn.save {
-    background-color: #28a745;
+    background: var(--accent-color);
     color: white;
   }
 
   .action-btn.save:hover {
-    background-color: #218838;
+    background: var(--accent-hover);
   }
 
   /* Tablet and mobile optimizations */
@@ -285,7 +285,7 @@ const { imageSrc = '', isOpen = false } = Astro.props;
     }
 
     .close-btn:active {
-      background-color: #f0f0f0;
+      background: var(--bg-secondary);
       transform: scale(0.95);
     }
 

@@ -16,12 +16,9 @@ const t = getTranslator(lang);
 ---
 
 <div class="prompt-card">
-  
   <div class="header">
     <h2 class="title">{t('promptinput.title')}</h2>
   </div>
-
-  
 
   <textarea
     id="prompt-input"
@@ -30,27 +27,7 @@ const t = getTranslator(lang);
     rows={rows}
     maxlength={maxLength}
     class="prompt-textarea"
-    oninput={`
-      const input = this;
-      const charCountElement = document.getElementById('char-count');
-      const charCount = input.value.length;
-      
-      charCountElement.textContent = charCount + '/${maxLength}';
-      
-      const ninetyPercent = ${maxLength} * 0.9;
-      const ninetyFivePercent = ${maxLength} * 0.95;
-
-      charCountElement.classList.remove('yellow', 'red');
-
-      if (charCount > ninetyFivePercent) {
-        charCountElement.classList.add('red');
-      } else if (charCount > ninetyPercent) {
-        charCountElement.classList.add('yellow');
-      }
-    `}
   >{initialValue}</textarea>
-
-  
 </div>
 
 <style>
@@ -58,16 +35,18 @@ const t = getTranslator(lang);
     width: 100%;
     max-width: 320px;
     margin: 2rem auto;
-    background-color: rgba(255, 255, 255, 0.8);
+    background: var(--glass-bg);
     backdrop-filter: blur(10px);
     border-radius: 1.5rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 25px var(--shadow-light);
+    border: 1px solid var(--border-color);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    transition: all 0.3s ease;
   }
 
   .header {
@@ -77,73 +56,48 @@ const t = getTranslator(lang);
   .title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #374151;
-  }
-
-  .char-count {
-    font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--text-primary);
     transition: color 0.3s ease;
-  }
-
-  .char-count.yellow {
-    color: #f59e0b;
-  }
-
-  .char-count.red {
-    color: #ef4444;
-  }
-
-  .icon-container {
-    width: 8rem;
-    height: 8rem;
-    background-color: #1f2937;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .icon {
-    width: 5rem;
-    height: 5rem;
-    color: #ffffff;
+    margin: 0;
   }
 
   .prompt-textarea {
     width: 100%;
     padding: 0.75rem;
-    background-color: #f9fafb;
-    border: 1px solid #d1d5db;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
     border-radius: 0.5rem;
     font-size: 1rem;
     resize: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+
+  .prompt-textarea::placeholder {
+    color: var(--text-muted);
   }
 
   .prompt-textarea:focus {
     outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
-  .submit-button {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    color: #374151;
-    font-weight: 600;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-  }
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .prompt-card {
+      max-width: 280px;
+      margin: 1.5rem auto;
+      padding: 1.25rem;
+    }
 
-  .submit-button:hover {
-    background-color: #f3f4f6;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
+    .title {
+      font-size: 1rem;
+    }
 
-  .submit-button:focus {
-    outline: none;
+    .prompt-textarea {
+      font-size: 16px; /* Prevent zoom on iOS */
+    }
+  }
+</style>

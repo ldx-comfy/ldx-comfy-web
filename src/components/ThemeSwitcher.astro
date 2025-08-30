@@ -1,0 +1,336 @@
+---
+import { getTranslator } from '@gudupao/astro-i18n';
+
+// Define available themes
+const themes = [
+  { id: 'light', name: { en: 'Light', cn: '浅色', hk: '淺色', jp: 'ライト', fr: 'Clair' }, icon: 'sun' },
+  { id: 'dark', name: { en: 'Dark', cn: '深色', hk: '深色', jp: 'ダーク', fr: 'Sombre' }, icon: 'moon' },
+  { id: 'auto', name: { en: 'Auto', cn: '自动', hk: '自動', jp: '自動', fr: 'Auto' }, icon: 'monitor' }
+];
+
+// Get language from Astro context (server-side safe)
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
+
+interface Props {
+  size?: 'small' | 'medium' | 'large';
+  showLabel?: boolean;
+}
+
+const { size = 'medium', showLabel = true } = Astro.props;
+---
+
+<div class="theme-switcher" data-size={size}>
+  <div class="theme-buttons">
+    <button 
+      class="theme-btn light-btn" 
+      data-theme="light" 
+      onclick="switchTheme('light')"
+      title={t('theme.lightTitle')}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="5"></circle>
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+      </svg>
+      {showLabel && <span>{t('theme.light')}</span>}
+    </button>
+    
+    <button 
+      class="theme-btn dark-btn" 
+      data-theme="dark" 
+      onclick="switchTheme('dark')"
+      title={t('theme.darkTitle')}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+      </svg>
+      {showLabel && <span>{t('theme.dark')}</span>}
+    </button>
+    
+    <button 
+      class="theme-btn auto-btn" 
+      data-theme="auto" 
+      onclick="switchTheme('auto')"
+      title={t('theme.autoTitle')}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <path d="M8 21h8M12 17v4"></path>
+      </svg>
+      {showLabel && <span>{t('theme.auto')}</span>}
+    </button>
+  </div>
+</div>
+
+<script is:inline>
+  // Theme switching functionality
+  function switchTheme(themeId) {
+    // Update active button state
+    const buttons = document.querySelectorAll('.theme-btn');
+    const container = document.querySelector('.theme-buttons');
+    
+    buttons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === themeId);
+    });
+    
+    // Update sliding highlight
+    if (container) {
+      container.classList.remove('light-active', 'dark-active', 'auto-active');
+      container.classList.add(`${themeId}-active`);
+    }
+    
+    // Apply theme
+    if (themeId === 'auto') {
+      localStorage.removeItem('theme');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(prefersDark ? 'dark' : 'light');
+    } else {
+      localStorage.setItem('theme', themeId);
+      applyTheme(themeId);
+    }
+  }
+  
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    
+    if (theme === 'dark') {
+      root.classList.add('dark-theme');
+      root.classList.remove('light-theme');
+    } else {
+      root.classList.add('light-theme');
+      root.classList.remove('dark-theme');
+    }
+    
+    // Dispatch custom event
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: theme }));
+  }
+  
+  function getInitialTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) return savedTheme;
+    
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    
+    return 'light';
+  }
+  
+  function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const actualTheme = savedTheme || 'auto';
+    const appliedTheme = savedTheme || getInitialTheme();
+    
+    applyTheme(appliedTheme);
+    
+    // Set active button and highlight
+    const buttons = document.querySelectorAll('.theme-btn');
+    const container = document.querySelector('.theme-buttons');
+    
+    buttons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === actualTheme);
+    });
+    
+    if (container) {
+      container.classList.remove('light-active', 'dark-active', 'auto-active');
+      container.classList.add(`${actualTheme}-active`);
+    }
+    
+    // Listen to system theme changes
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+          applyTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+    }
+  }
+  
+  // Initialize theme when DOM is loaded
+  document.addEventListener('DOMContentLoaded', initializeTheme);
+</script>
+
+<style>
+/* CSS Variables for theme colors */
+:global(:root) {
+  /* Light theme colors */
+  --bg-primary: #f0f2f5;
+  --bg-secondary: rgba(255, 255, 255, 0.6);
+  --bg-sidebar: rgba(255, 255, 255, 0.6);
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #999999;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --accent-color: #0056b3;
+  --accent-hover: #004494;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.3);
+}
+
+:global(:root.dark-theme) {
+  /* Dark theme colors */
+  --bg-primary: #0f1419;
+  --bg-secondary: rgba(30, 36, 47, 0.8);
+  --bg-sidebar: rgba(24, 30, 39, 0.9);
+  --text-primary: #e8eaed;
+  --text-secondary: #bdc1c6;
+  --text-muted: #9aa0a6;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --shadow-light: rgba(0, 0, 0, 0.3);
+  --shadow-medium: rgba(0, 0, 0, 0.4);
+  --glass-bg: rgba(30, 36, 47, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+.theme-switcher {
+  display: inline-block;
+}
+
+.theme-buttons {
+  display: flex;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-light);
+  position: relative;
+  min-width: 180px;
+}
+
+.theme-buttons::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(33.333% - 4px);
+  height: calc(100% - 8px);
+  background: var(--accent-color);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+  opacity: 0;
+}
+
+.theme-buttons.light-active::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.theme-buttons.dark-active::before {
+  opacity: 1;
+  transform: translateX(calc(100% + 2px));
+}
+
+.theme-buttons.auto-active::before {
+  opacity: 1;
+  transform: translateX(calc(200% + 4px));
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 44px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Yu Gothic", Roboto, Arial, sans-serif;
+}
+
+.theme-btn svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: all 0.2s ease;
+}
+
+.theme-btn.light-btn svg circle {
+  fill: currentColor;
+}
+
+.theme-btn.dark-btn svg path {
+  fill: currentColor;
+}
+
+.theme-btn:hover {
+  background: transparent;
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.theme-btn.active {
+  background: transparent;
+  color: white;
+}
+
+.theme-btn.active svg {
+  stroke: white;
+}
+
+.theme-btn.active.light-btn svg circle,
+.theme-btn.active.dark-btn svg path {
+  fill: white;
+}
+
+.theme-switcher[data-size="small"] .theme-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  min-width: 36px;
+}
+
+.theme-switcher[data-size="large"] .theme-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  min-width: 52px;
+}
+
+/* Hide text on smaller screens */
+@media (max-width: 768px) {
+  .theme-btn span {
+    display: none;
+  }
+  
+  .theme-btn {
+    padding: 8px;
+    min-width: 36px;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .theme-buttons {
+    padding: 3px;
+    gap: 1px;
+  }
+  
+  .theme-btn {
+    padding: 6px;
+    min-width: 32px;
+  }
+  
+  .theme-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+</style>

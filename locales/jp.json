@@ -25,6 +25,14 @@
     "about": "私たちについて",
     "contact": "お問い合わせ"
   },
+  "theme": {
+    "light": "ライト",
+    "dark": "ダーク",
+    "auto": "自動",
+    "lightTitle": "ライトテーマ",
+    "darkTitle": "ダークテーマ",
+    "autoTitle": "自動テーマ"
+  },
   "togglewithtext": {
     "toggleText": "切り替え"
   },

@@ -2,6 +2,7 @@
 // src/components/Sidebar.astro
 import { getTranslator } from '@gudupao/astro-i18n';
 import LanguageSwitcher from './LanguageSwitcher.astro';
+import ThemeSwitcher from './ThemeSwitcher.astro';
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -9,27 +10,32 @@ const t = getTranslator(lang);
 ---
 <aside>
   <div class="sidebar-header">
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2 12l10 5 10-5" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     <h2>{t('sidebar.appName')}</h2>
   </div>
   <nav>
     <ul>
       <li><a href="/" class="active">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 22V12h6v10" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M9 22V12h6v10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         <span>{t('sidebar.home')}</span>
       </a></li>
       <li><a href="/about">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         <span>{t('sidebar.about')}</span>
       </a></li>
       <li><a href="/contact">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 6l-10 7L2 6" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M22 6l-10 7L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         <span>{t('sidebar.contact')}</span>
       </a></li>
     </ul>
   </nav>
-  <div class="language-switcher-container">
-    <LanguageSwitcher pathBasedRouting={false} />
+  <div class="sidebar-controls">
+    <div class="theme-switcher-container">
+      <ThemeSwitcher size="medium" showLabel={true} />
+    </div>
+    <div class="language-switcher-container">
+      <LanguageSwitcher pathBasedRouting={false} />
+    </div>
   </div>
 </aside>
 
@@ -42,12 +48,13 @@ const t = getTranslator(lang);
     flex-direction: column;
     gap: 40px; /* Space between header and nav */
     
-    /* White Glassmorphism styles */
-    background: rgba(255, 255, 255, 0.6);
+    /* Glassmorphism styles with theme support */
+    background: var(--bg-sidebar);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-right: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid var(--border-color);
+    box-shadow: 0 4px 30px var(--shadow-light);
+    transition: all 0.3s ease;
   }
 
   .sidebar-header {
@@ -56,10 +63,16 @@ const t = getTranslator(lang);
     gap: 15px;
   }
 
+  .sidebar-header svg {
+    color: var(--text-primary);
+    transition: color 0.3s ease;
+  }
+
   .sidebar-header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: #333;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
   }
 
   nav ul {
@@ -78,29 +91,57 @@ const t = getTranslator(lang);
     padding: 12px 15px;
     border-radius: 8px;
     text-decoration: none;
-    color: #333;
+    color: var(--text-primary);
     font-size: 1.1rem;
     font-weight: 500;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: all 0.3s ease;
   }
 
   nav a:hover,
   nav a.active {
-    background-color: rgba(0, 123, 255, 0.1);
-    color: #0056b3;
-  }
-
-  nav a:hover svg path,
-  nav a.active svg path {
-    stroke: #0056b3;
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--accent-color);
   }
 
   nav a svg {
-    transition: stroke 0.3s ease;
+    transition: all 0.3s ease;
+    color: currentColor;
   }
   
-  .language-switcher-container {
+  .sidebar-controls {
     margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     padding: 20px 0;
+  }
+
+  .theme-switcher-container,
+  .language-switcher-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    aside {
+      width: 250px;
+      padding: 20px;
+      gap: 30px;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.3rem;
+    }
+
+    nav a {
+      font-size: 1rem;
+      padding: 10px 12px;
+    }
+
+    .sidebar-controls {
+      gap: 15px;
+      padding: 15px 0;
+    }
   }
 </style>

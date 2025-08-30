@@ -27,13 +27,16 @@ import { mockWorkflowParams } from '../api/mockData';
 		max-width: 650px;
 		min-height: 500px;
 		border-radius: 32px;
-		background-color: #f0f0f0;
+		background: var(--bg-secondary);
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		margin: 40px auto;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		box-shadow: 0 4px 12px var(--shadow-light);
 		padding: 2rem;
+		border: 1px solid var(--border-color);
+		backdrop-filter: blur(10px);
+		transition: all 0.3s ease;
 	}
 	
 	.workflow-container {

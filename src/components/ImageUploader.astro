@@ -8,7 +8,7 @@ const t = getTranslator(lang);
 ---
 <div id="upload-box" class="upload-box">
   <div class="upload-content">
-    <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 8l-5-5-5 5" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 3v12" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 8l-5-5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     <p>{t('imageuploader.uploadText')}</p>
   </div>
   <img id="image-preview" class="image-preview" src="" alt="Image preview" hidden />
@@ -24,7 +24,7 @@ const t = getTranslator(lang);
   .upload-box {
     width: 250px;
     height: 250px;
-    border: 2px dashed #d9d9d9;
+    border: 2px dashed var(--border-color);
     border-radius: 24px;
     display: flex;
     justify-content: center;
@@ -34,19 +34,19 @@ const t = getTranslator(lang);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    background-color: #fafafa;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Blue outline */
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
 
   .upload-box:hover {
-    border-color: #007bff;
-    background-color: #f0f8ff;
+    border-color: var(--accent-color);
+    background: var(--glass-bg);
   }
 
   .upload-box.dragover {
     border-style: solid;
-    border-color: #007bff;
-    background-color: #e6f7ff;
+    border-color: var(--accent-color);
+    background: rgba(59, 130, 246, 0.1);
   }
   
   .upload-content {
@@ -54,18 +54,18 @@ const t = getTranslator(lang);
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    color: #888;
+    color: var(--text-secondary);
     z-index: 1; /* Ensure content is above preview */
   }
 
   .upload-content p {
     margin: 0;
     font-size: 14px;
-    color: #555;
+    color: var(--text-primary);
   }
 
   .upload-content strong {
-    color: #007bff;
+    color: var(--accent-color);
   }
 
   .upload-icon path {
@@ -74,7 +74,7 @@ const t = getTranslator(lang);
 
   .upload-box:hover .upload-icon path,
   .upload-box.dragover .upload-icon path {
-    stroke: #007bff;
+    stroke: var(--accent-color);
   }
 
   .image-preview {
@@ -100,7 +100,7 @@ const t = getTranslator(lang);
     position: absolute;
     top: 10px;
     right: 10px;
-    background-color: rgba(0, 123, 255, 0.9);
+    background: var(--accent-color);
     color: white;
     border: none;
     border-radius: 6px;
@@ -110,13 +110,13 @@ const t = getTranslator(lang);
     font-weight: 500;
     z-index: 2;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px var(--shadow-light);
   }
 
   .edit-btn:hover {
-    background-color: rgba(0, 123, 255, 1);
+    background: var(--accent-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px var(--shadow-medium);
   }
 
   /* Tablet and mobile responsive adjustments */

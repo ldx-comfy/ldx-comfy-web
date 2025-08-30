@@ -25,6 +25,14 @@
     "about": "About Us",
     "contact": "Contact Us"
   },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "lightTitle": "Light Theme",
+    "darkTitle": "Dark Theme",
+    "autoTitle": "Auto Theme"
+  },
   "togglewithtext": {
     "toggleText": "Toggle"
   },
