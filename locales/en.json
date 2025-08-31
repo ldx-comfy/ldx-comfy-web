@@ -40,5 +40,30 @@
     "unknownComponent": "Unknown component type",
     "nodeId": "Node ID",
     "title": "Title"
+  },
+  "homepage": {
+    "title": "Available Workflows",
+    "description": "Select a workflow to get started",
+    "loading": "Loading workflows...",
+    "error": "Failed to Load Workflows",
+    "retry": "Retry",
+    "empty": "No Workflows Available",
+    "emptyDescription": "No workflows were found. Please check your API connection."
+  },
+  "workflow": {
+    "backToWorkflows": "Back to Workflows",
+    "loading": "Loading workflow...",
+    "failedToLoad": "Failed to Load Workflow",
+    "returnToList": "Return to Workflow List"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm"
   }
 }

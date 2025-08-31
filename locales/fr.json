@@ -40,5 +40,30 @@
     "unknownComponent": "Type de composant inconnu",
     "nodeId": "ID du nœud",
     "title": "Titre"
+  },
+  "homepage": {
+    "title": "Flux de Travail Disponibles",
+    "description": "Sélectionnez un flux de travail pour commencer",
+    "loading": "Chargement des flux de travail...",
+    "error": "Échec du chargement des flux de travail",
+    "retry": "Réessayer",
+    "empty": "Aucun Flux de Travail Disponible",
+    "emptyDescription": "Aucun flux de travail trouvé. Veuillez vérifier votre connexion API."
+  },
+  "workflow": {
+    "backToWorkflows": "Retour à la liste des flux de travail",
+    "loading": "Chargement du flux de travail...",
+    "failedToLoad": "Échec du chargement du flux de travail",
+    "returnToList": "Retour à la liste des flux de travail"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Éditer",
+    "delete": "Supprimer",
+    "confirm": "Confirmer"
   }
 }

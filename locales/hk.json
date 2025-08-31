@@ -15,7 +15,7 @@
     "alertMessage": "請上傳圖片檔案"
   },
   "promptinput": {
-    "title": "提示詞輸入框",
+    "title": "提示詞輸入",
     "placeholder": "請輸入提示詞...",
     "submit": "提交"
   },
@@ -40,5 +40,30 @@
     "unknownComponent": "未知元件類型",
     "nodeId": "節點ID",
     "title": "標題"
+  },
+  "homepage": {
+    "title": "可用工作流程",
+    "description": "選擇一個工作流程開始使用",
+    "loading": "正在載入工作流程...",
+    "error": "載入工作流程失敗",
+    "retry": "重試",
+    "empty": "暫無可用工作流程",
+    "emptyDescription": "未找到工作流程，請檢查API連線。"
+  },
+  "workflow": {
+    "backToWorkflows": "返回工作流程列表",
+    "loading": "正在載入工作流程...",
+    "failedToLoad": "工作流程載入失敗",
+    "returnToList": "返回工作流程列表"
+  },
+  "common": {
+    "loading": "載入中...",
+    "error": "錯誤",
+    "retry": "重試",
+    "cancel": "取消",
+    "save": "儲存",
+    "edit": "編輯",
+    "delete": "刪除",
+    "confirm": "確認"
   }
 }

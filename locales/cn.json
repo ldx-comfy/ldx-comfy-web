@@ -15,7 +15,7 @@
     "alertMessage": "请上传图片文件"
   },
   "promptinput": {
-    "title": "提示词输入框",
+    "title": "提示词输入",
     "placeholder": "请输入提示词...",
     "submit": "提交"
   },
@@ -40,5 +40,30 @@
     "unknownComponent": "未知组件类型",
     "nodeId": "节点ID",
     "title": "标题"
+  },
+  "homepage": {
+    "title": "可用工作流",
+    "description": "选择一个工作流开始使用",
+    "loading": "正在加载工作流...",
+    "error": "加载工作流失败",
+    "retry": "重试",
+    "empty": "暂无可用工作流",
+    "emptyDescription": "未找到工作流，请检查API连接。"
+  },
+  "workflow": {
+    "backToWorkflows": "返回工作流列表",
+    "loading": "正在加载工作流...",
+    "failedToLoad": "工作流加载失败",
+    "returnToList": "返回工作流列表"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "retry": "重试",
+    "cancel": "取消",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "confirm": "确认"
   }
 }

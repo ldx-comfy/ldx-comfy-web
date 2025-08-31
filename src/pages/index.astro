@@ -32,28 +32,28 @@ try {
 <Layout>
   <div class="workflows-page">
     <div class="page-header">
-      <h1 class="page-title">Available Workflows</h1>
-      <p class="page-description">Select a workflow to get started</p>
+      <h1 class="page-title">{t('homepage.title')}</h1>
+      <p class="page-description">{t('homepage.description')}</p>
     </div>
 
     <div class="workflows-container">
       {loading ? (
         <div class="loading-container">
           <div class="loading-spinner"></div>
-          <p>Loading workflows...</p>
+          <p>{t('homepage.loading')}</p>
         </div>
       ) : error ? (
         <div class="error-container">
           <div class="error-icon">⚠️</div>
-          <h3>Failed to Load Workflows</h3>
+          <h3>{t('homepage.error')}</h3>
           <p class="error-message">{error}</p>
-          <button onclick="window.location.reload()" class="retry-button">Retry</button>
+          <button onclick="window.location.reload()" class="retry-button">{t('homepage.retry')}</button>
         </div>
       ) : availableWorkflows.length === 0 ? (
         <div class="empty-container">
           <div class="empty-icon">📋</div>
-          <h3>No Workflows Available</h3>
-          <p>No workflows were found. Please check your API connection.</p>
+          <h3>{t('homepage.empty')}</h3>
+          <p>{t('homepage.emptyDescription')}</p>
         </div>
       ) : (
         <div class="workflow-grid">
