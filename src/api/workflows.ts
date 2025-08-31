@@ -18,9 +18,10 @@ interface HTTPValidationError {
 // API 響應類型
 type WorkflowListResponse = string[];
 type WorkflowParamsResponse = WorkflowParam[];
+type AvailableWorkflowsResponse = string[];
 
 // 基礎 API 配置
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
 
 // 獲取所有工作流列表
 export async function getWorkflowList(): Promise<WorkflowListResponse> {
@@ -33,6 +34,22 @@ export async function getWorkflowList(): Promise<WorkflowListResponse> {
 
   if (!response.ok) {
     throw new Error(`獲取工作流列表失敗: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// 獲取可用工作流列表
+export async function getAvailableWorkflows(): Promise<AvailableWorkflowsResponse> {
+  const response = await fetch(`${API_BASE_URL}/forms/workflows`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`獲取可用工作流列表失敗: ${response.status} ${response.statusText}`);
   }
 
   return response.json();

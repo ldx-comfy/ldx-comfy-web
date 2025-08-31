@@ -7,20 +7,79 @@ import Layout from '../layouts/Layout.astro';
 import DynamicWorkflow from '../components/DynamicWorkflow.astro';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import { mockWorkflowParams } from '../api/mockData';
+import { getAvailableWorkflows, getWorkflowParams } from '../api/workflows';
+
+// 獲取可用工作流列表
+let availableWorkflows: string[] = [];
+let selectedWorkflow: string | null = null;
+let workflowParams: any[] = [];
+let loading = true;
+let error: string | null = null;
+
+// 添加調試日誌
+console.log('開始獲取工作流列表');
+
+try {
+  availableWorkflows = await getAvailableWorkflows();
+  
+  // 在控制台輸出 API 返回的結果
+  console.log('可用工作流列表:', availableWorkflows);
+  
+  // 自動選擇第一個工作流
+  if (availableWorkflows.length > 0) {
+    selectedWorkflow = availableWorkflows[0];
+    console.log('選中的工作流:', selectedWorkflow);
+    
+    // 獲取選中工作流的參數
+    workflowParams = await getWorkflowParams(selectedWorkflow);
+    
+    // 在控制台輸出工作流參數
+    console.log('選中工作流的參數:', workflowParams);
+  } else {
+    console.log('沒有可用的工作流');
+  }
+} catch (err: unknown) {
+  console.error('獲取工作流列表時發生錯誤:', err);
+  error = (err as Error).message || '獲取工作流列表時發生錯誤';
+} finally {
+  console.log('完成獲取工作流列表');
+  loading = false;
+}
 
 // Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
 // Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 
 ---
  
-<Layout>
-	<div class="outer-frame">
-		<div class="workflow-container">
-			<DynamicWorkflow params={mockWorkflowParams} />
-		</div>
-	</div>
-</Layout>
 
+<Layout>
+<div class="outer-frame">
+	<!-- 顯示可用工作流列表 -->
+	<div class="workflow-list">
+		<h2>可用工作流</h2>
+		{loading ? (
+			<p>加載中...</p>
+		) : error ? (
+			<p class="error">錯誤: {error}</p>
+		) : (
+			<ul>
+				{availableWorkflows.map((workflow) => (
+					<li>{workflow}</li>
+				))}
+			</ul>
+		)}
+	</div>
+	
+	<!-- 顯示選中工作流的參數 -->
+	<div class="workflow-container">
+		{selectedWorkflow ? (
+			<DynamicWorkflow params={workflowParams} />
+		) : (
+			<p>請選擇一個工作流</p>
+		)}
+	</div>
+</div>
+</Layout>
 <style>
 	.outer-frame {
 		width: 100%;
@@ -29,8 +88,8 @@ import { mockWorkflowParams } from '../api/mockData';
 		border-radius: 32px;
 		background: var(--bg-secondary);
 		display: flex;
-		justify-content: center;
-		align-items: center;
+		flex-direction: column;
+		gap: 2rem;
 		margin: 40px auto;
 		box-shadow: 0 4px 12px var(--shadow-light);
 		padding: 2rem;
@@ -44,6 +103,40 @@ import { mockWorkflowParams } from '../api/mockData';
 		display: flex;
 		justify-content: center;
 		align-items: center;
+	}
+	
+	.workflow-list {
+		width: 100%;
+		background-color: white;
+		border-radius: 16px;
+		padding: 1.5rem;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+	
+	.workflow-list h2 {
+		margin-top: 0;
+		color: #333;
+		font-size: 1.5rem;
+	}
+	
+	.workflow-list ul {
+		list-style-type: none;
+		padding: 0;
+	}
+	
+	.workflow-list li {
+		padding: 0.75rem;
+		border-bottom: 1px solid #eee;
+		color: #555;
+	}
+	
+	.workflow-list li:last-child {
+		border-bottom: none;
+	}
+	
+	.error {
+		color: #d32f2f;
+		font-weight: 500;
 	}
 </style>
 
