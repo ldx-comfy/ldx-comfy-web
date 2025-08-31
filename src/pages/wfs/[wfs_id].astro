@@ -1,0 +1,243 @@
+---
+// Disable prerendering to access request headers and params
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import DynamicWorkflow from '../../components/DynamicWorkflow.astro';
+import { getWorkflowParams } from '../../api/workflows';
+import { getTranslator } from '@gudupao/astro-i18n';
+
+// Get language from params or cookie
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
+
+// Get workflow ID from URL params
+const { wfs_id } = Astro.params;
+
+let workflowParams: any[] = [];
+let loading = true;
+let error: string | null = null;
+let workflowTitle = wfs_id;
+
+// Validate workflow ID
+if (!wfs_id) {
+  error = 'Workflow ID is required';
+  loading = false;
+} else {
+  console.log(`Loading workflow: ${wfs_id}`);
+  
+  try {
+    // Get workflow parameters
+    workflowParams = await getWorkflowParams(wfs_id);
+    console.log(`Workflow ${wfs_id} parameters:`, workflowParams);
+    
+    // Set a more user-friendly title
+    workflowTitle = wfs_id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    
+  } catch (err: unknown) {
+    console.error(`Error loading workflow ${wfs_id}:`, err);
+    error = (err as Error).message || `Failed to load workflow: ${wfs_id}`;
+  } finally {
+    loading = false;
+  }
+}
+---
+
+<Layout>
+  <div class="workflow-page">
+    <div class="workflow-header">
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back to Workflows
+      </a>
+      <h1 class="workflow-title">{workflowTitle}</h1>
+    </div>
+
+    <div class="workflow-content">
+      {loading ? (
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Loading workflow...</p>
+        </div>
+      ) : error ? (
+        <div class="error-container">
+          <div class="error-icon">⚠️</div>
+          <h3>Failed to Load Workflow</h3>
+          <p class="error-message">{error}</p>
+          <a href="/" class="retry-link">Return to Workflow List</a>
+        </div>
+      ) : (
+        <div class="workflow-container">
+          <DynamicWorkflow params={workflowParams} />
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .workflow-page {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .workflow-header {
+    margin-bottom: 2rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+    margin-bottom: 1rem;
+  }
+
+  .back-link:hover {
+    color: var(--accent-color);
+  }
+
+  .back-link svg {
+    stroke: currentColor;
+  }
+
+  .workflow-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .workflow-content {
+    min-height: 400px;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .loading-container p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+  }
+
+  .error-icon {
+    font-size: 3rem;
+  }
+
+  .error-container h3 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .error-message {
+    color: #d32f2f;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .retry-link {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+  }
+
+  .retry-link:hover {
+    background: var(--accent-color);
+    color: white;
+  }
+
+  .workflow-container {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-light);
+  }
+
+  /* Tablet and mobile responsive adjustments */
+  @media (max-width: 1024px) {
+    .workflow-page {
+      padding: 1.5rem;
+    }
+
+    .workflow-title {
+      font-size: 2rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .workflow-page {
+      padding: 1rem;
+    }
+
+    .workflow-title {
+      font-size: 1.75rem;
+    }
+
+    .workflow-container {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .workflow-title {
+      font-size: 1.5rem;
+    }
+
+    .workflow-container {
+      padding: 1rem;
+    }
+  }
+</style>
