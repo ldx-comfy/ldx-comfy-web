@@ -5,6 +5,7 @@ import ImageEditor from './ImageEditor.astro';
 import PromptInput from './PromptInput.astro';
 import ToggleWithText from './ToggleWithText.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
+import { getWorkflowFormSchema, executeWorkflowWithForm, getExecutionStatus, cancelExecution } from '../api/workflows';
 
 interface WorkflowParam {
  node_id: string;
@@ -14,9 +15,12 @@ interface WorkflowParam {
 
 interface Props {
   params: WorkflowParam[];
+  workflowId: string;
+  executionResult?: any;
+  executionError?: string | null;
 }
 
-const { params = [] } = Astro.props;
+const { params = [], workflowId, executionResult, executionError } = Astro.props;
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -50,6 +54,33 @@ const t = getTranslator(lang);
       </div>
     ))
   }
+  
+  <div class="workflow-controls">
+    <form method="post" action={`/wfs/${workflowId}/execute`}>
+      <input type="hidden" name="workflowId" value={workflowId} />
+      <input type="hidden" name="params" value={JSON.stringify(params)} />
+      <button
+        class="execute-btn"
+        type="submit"
+      >
+        {t('dynamicworkflow.execute')}
+      </button>
+    </form>
+  </div>
+  
+  {executionResult && (
+    <div class="execution-result">
+      <h3>{t('dynamicworkflow.result')}:</h3>
+      <pre>{JSON.stringify(executionResult, null, 2)}</pre>
+    </div>
+  )}
+  
+  {executionError && (
+    <div class="execution-error">
+      <h3>{t('dynamicworkflow.error')}:</h3>
+      <p>{executionError}</p>
+    </div>
+  )}
 </div>
 
 <style>

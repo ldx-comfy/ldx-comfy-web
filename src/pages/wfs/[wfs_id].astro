@@ -4,7 +4,7 @@ export const prerender = false;
 
 import Layout from '../../layouts/Layout.astro';
 import DynamicWorkflow from '../../components/DynamicWorkflow.astro';
-import { getWorkflowParams } from '../../api/workflows';
+import { getWorkflowParams, executeWorkflowWithForm } from '../../api/workflows';
 import { getTranslator } from '@gudupao/astro-i18n';
 
 // Get language from params or cookie
@@ -18,6 +18,8 @@ let workflowParams: any[] = [];
 let loading = true;
 let error: string | null = null;
 let workflowTitle = wfs_id;
+let executionResult: any = null;
+let executionError: string | null = null;
 
 // Validate workflow ID
 if (!wfs_id) {
@@ -39,6 +41,30 @@ if (!wfs_id) {
     error = (err as Error).message || `Failed to load workflow: ${wfs_id}`;
   } finally {
     loading = false;
+  }
+}
+
+// Handle form submission
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const workflowId = formData.get('workflowId') as string;
+    const params = JSON.parse(formData.get('params') as string);
+    
+    // Prepare nodes data (this is a simplified example)
+    // In a real implementation, you would collect data from the form components
+    const nodes = JSON.stringify(params.map((param: any) => ({
+      node_id: param.node_id,
+      title: param.title,
+      class_type: param.class_type
+    })));
+    
+    // Execute workflow
+    const response = await executeWorkflowWithForm(workflowId, nodes);
+    executionResult = response.result;
+  } catch (err: unknown) {
+    console.error('Error executing workflow:', err);
+    executionError = (err as Error).message || 'Failed to execute workflow';
   }
 }
 ---
@@ -70,7 +96,12 @@ if (!wfs_id) {
         </div>
       ) : (
         <div class="workflow-container">
-          <DynamicWorkflow params={workflowParams} />
+          <DynamicWorkflow
+            params={workflowParams}
+            workflowId={wfs_id!}
+            executionResult={executionResult}
+            executionError={executionError}
+          />
         </div>
       )}
     </div>
