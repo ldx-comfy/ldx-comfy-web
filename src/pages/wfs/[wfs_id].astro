@@ -95,13 +95,42 @@ if (Astro.request.method === 'POST') {
           <a href="/" class="retry-link">{t('workflow.returnToList')}</a>
         </div>
       ) : (
-        <div class="workflow-container">
-          <DynamicWorkflow
-            params={workflowParams}
-            workflowId={wfs_id!}
-            executionResult={executionResult}
-            executionError={executionError}
-          />
+        <div class="two-column-layout">
+          <div class="left-column">
+            <div class="workflow-container">
+              <DynamicWorkflow
+                params={workflowParams}
+                workflowId={wfs_id!}
+                executionResult={null}
+                executionError={null}
+              />
+            </div>
+          </div>
+          <div class="right-column">
+            <div class="results-container">
+              {executionResult && (
+                <div class="execution-result">
+                  <h3>{t('dynamicworkflow.result')}:</h3>
+                  <pre>{JSON.stringify(executionResult, null, 2)}</pre>
+                </div>
+              )}
+
+              {executionError && (
+                <div class="execution-error">
+                  <h3>{t('dynamicworkflow.error')}:</h3>
+                  <p>{executionError}</p>
+                </div>
+              )}
+
+              {!executionResult && !executionError && (
+                <div class="no-results">
+                  <div class="no-results-icon">📊</div>
+                  <h3>{t('workflow.resultsWillAppearHere')}</h3>
+                  <p>{t('workflow.executeToSeeResults')}</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -111,9 +140,11 @@ if (Astro.request.method === 'POST') {
 <style>
   .workflow-page {
     width: 100%;
-    max-width: 800px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .workflow-header {
@@ -229,12 +260,116 @@ if (Astro.request.method === 'POST') {
     color: white;
   }
 
+  .two-column-layout {
+    display: grid;
+    grid-template-columns: minmax(400px, 500px) 1fr;
+    gap: 2rem;
+    align-items: start;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .left-column {
+    position: sticky;
+    top: 2rem;
+  }
+
+  .right-column {
+    min-height: 600px;
+  }
+
   .workflow-container {
     background: var(--bg-secondary);
     border-radius: 16px;
     padding: 2rem;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 12px var(--shadow-light);
+  }
+
+  .results-container {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 2rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px var(--shadow-light);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .execution-result {
+    flex: 1;
+  }
+
+  .execution-result h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+  }
+
+  .execution-result pre {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .execution-error {
+    background: #fee;
+    border: 1px solid #f44336;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .execution-error h3 {
+    color: #d32f2f;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+  }
+
+  .execution-error p {
+    color: #d32f2f;
+    margin: 0;
+  }
+
+  .no-results {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+
+  .no-results-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .no-results h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .no-results p {
+    margin: 0;
+    font-size: 0.9rem;
   }
 
   /* Tablet and mobile responsive adjustments */
@@ -245,6 +380,10 @@ if (Astro.request.method === 'POST') {
 
     .workflow-title {
       font-size: 2rem;
+    }
+
+    .two-column-layout {
+      gap: 1.5rem;
     }
   }
 
@@ -257,8 +396,22 @@ if (Astro.request.method === 'POST') {
       font-size: 1.75rem;
     }
 
+    .two-column-layout {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .left-column {
+      position: static;
+    }
+
     .workflow-container {
       padding: 1.5rem;
+    }
+
+    .results-container {
+      padding: 1.5rem;
+      min-height: 300px;
     }
   }
 
@@ -269,6 +422,19 @@ if (Astro.request.method === 'POST') {
 
     .workflow-container {
       padding: 1rem;
+    }
+
+    .results-container {
+      padding: 1rem;
+    }
+
+    .execution-result pre {
+      font-size: 0.8rem;
+      padding: 0.75rem;
+    }
+
+    .no-results-icon {
+      font-size: 2.5rem;
     }
   }
 </style>

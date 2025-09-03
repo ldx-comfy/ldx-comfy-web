@@ -41,6 +41,7 @@
     "nodeId": "Node ID",
     "title": "Title",
     "execute": "Execute",
+    "result": "Result",
     "error": "Error"
   },
   "homepage": {
@@ -56,7 +57,10 @@
     "backToWorkflows": "Back to Workflows",
     "loading": "Loading workflow...",
     "failedToLoad": "Failed to Load Workflow",
-    "returnToList": "Return to Workflow List"
+    "returnToList": "Return to Workflow List",
+    "parameters": "Parameters",
+    "resultsWillAppearHere": "Results will appear here",
+    "executeToSeeResults": "Execute the workflow to see results"
   },
   "common": {
     "loading": "Loading...",

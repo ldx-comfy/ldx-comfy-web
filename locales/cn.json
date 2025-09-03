@@ -40,7 +40,8 @@
     "unknownComponent": "未知组件类型",
     "nodeId": "节点ID",
     "title": "标题",
-    "execute": "Execute",
+    "execute": "执行",
+    "result": "结果",
     "error": "错误"
   },
   "homepage": {
@@ -56,7 +57,10 @@
     "backToWorkflows": "返回工作流列表",
     "loading": "正在加载工作流...",
     "failedToLoad": "工作流加载失败",
-    "returnToList": "返回工作流列表"
+    "returnToList": "返回工作流列表",
+    "parameters": "参数",
+    "resultsWillAppearHere": "结果将显示在这里",
+    "executeToSeeResults": "执行工作流以查看结果"
   },
   "common": {
     "loading": "加载中...",
