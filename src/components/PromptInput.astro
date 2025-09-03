@@ -17,13 +17,13 @@ const t = getTranslator(lang);
 
 <div class="prompt-card">
   <div class="header">
-    <h2 class="title">{t('promptinput.title')}</h2>
+    <h2 class="title">{placeholder || t('promptinput.title')}</h2>
   </div>
 
   <textarea
     id="prompt-input"
     name="prompt"
-    placeholder={t('promptinput.placeholder')}
+    placeholder={placeholder || t('promptinput.placeholder')}
     rows={rows}
     maxlength={maxLength}
     class="prompt-textarea"

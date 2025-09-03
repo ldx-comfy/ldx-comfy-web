@@ -35,22 +35,22 @@ const t = getTranslator(lang);
     params.map((param) => (
       <div class="component-wrapper">
         {(() => {
-          if (param.class_type === 'LoadImageOutput') {
-            return <ImageUploader />;
-          } else if (param.class_type === 'Text') {
-            return <PromptInput placeholder={param.title} />;
-          } else if (param.class_type === 'Switch any [Crystools]') {
-            return <ToggleWithText text={param.title} />;
-          } else {
-            return (
-              <div class="unknown-component">
-                <p>{t('dynamicworkflow.unknownComponent')}: {param.class_type}</p>
-                <p>{t('dynamicworkflow.nodeId')}: {param.node_id}</p>
-                <p>{t('dynamicworkflow.title')}: {param.title}</p>
-              </div>
-            );
-          }
-        })()}
+           if (param.class_type === 'LoadImageOutput') {
+             return <ImageUploader title={param.title} />;
+           } else if (param.class_type === 'Text') {
+             return <PromptInput placeholder={param.title} />;
+           } else if (param.class_type === 'Switch any [Crystools]') {
+             return <ToggleWithText text={param.title} />;
+           } else {
+             return (
+               <div class="unknown-component">
+                 <p>{t('dynamicworkflow.unknownComponent')}: {param.class_type}</p>
+                 <p>{t('dynamicworkflow.nodeId')}: {param.node_id}</p>
+                 <p>{t('dynamicworkflow.title')}: {param.title}</p>
+               </div>
+             );
+           }
+         })()}
       </div>
     ))
   }
