@@ -39,7 +39,9 @@
   "dynamicworkflow": {
     "unknownComponent": "不明なコンポーネントタイプ",
     "nodeId": "ノードID",
-    "title": "タイトル"
+    "title": "タイトル",
+    "execute": "Execute",
+    "error": "エラー"
   },
   "homepage": {
     "title": "利用可能なワークフロー",

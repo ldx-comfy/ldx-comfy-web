@@ -56,7 +56,7 @@ const t = getTranslator(lang);
   }
   
   <div class="workflow-controls">
-    <form method="post" action={`/wfs/${workflowId}/execute`}>
+    <form method="post" action="">
       <input type="hidden" name="workflowId" value={workflowId} />
       <input type="hidden" name="params" value={JSON.stringify(params)} />
       <button
@@ -99,11 +99,94 @@ const t = getTranslator(lang);
     justify-content: center;
   }
 
+  .workflow-controls {
+    display: flex;
+    justify-content: center;
+  }
+
   .unknown-component {
     padding: 1.5rem;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     color: var(--text-primary);
+  }
+
+  .execute-btn {
+    padding: 14px 28px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .execute-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .execute-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+  }
+
+  .execute-btn:hover::before {
+    left: 100%;
+  }
+
+  .execute-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+
+  .execute-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+
+  .execute-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .execute-btn {
+      padding: 16px 24px;
+      font-size: 16px;
+      min-height: 52px;
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .execute-btn {
+      padding: 18px 20px;
+      font-size: 16px;
+      min-height: 56px;
+    }
   }
 </style>

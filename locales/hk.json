@@ -39,7 +39,9 @@
   "dynamicworkflow": {
     "unknownComponent": "未知元件類型",
     "nodeId": "節點ID",
-    "title": "標題"
+    "title": "標題",
+    "execute": "Execute",
+    "error": "錯誤"
   },
   "homepage": {
     "title": "可用工作流程",

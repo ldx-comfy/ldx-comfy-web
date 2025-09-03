@@ -39,7 +39,9 @@
   "dynamicworkflow": {
     "unknownComponent": "Type de composant inconnu",
     "nodeId": "ID du nœud",
-    "title": "Titre"
+    "title": "Titre",
+    "execute": "Execute",
+    "error": "Erreur"
   },
   "homepage": {
     "title": "Flux de Travail Disponibles",

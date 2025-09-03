@@ -39,7 +39,9 @@
   "dynamicworkflow": {
     "unknownComponent": "Unknown component type",
     "nodeId": "Node ID",
-    "title": "Title"
+    "title": "Title",
+    "execute": "Execute",
+    "error": "Error"
   },
   "homepage": {
     "title": "Available Workflows",
