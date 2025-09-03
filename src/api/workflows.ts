@@ -50,7 +50,7 @@ const API_BASE_URL = 'http://127.0.0.1:1145/api/v1';
 
 // 獲取所有工作流列表
 export async function getWorkflowList(): Promise<WorkflowListResponse> {
-  const response = await fetch(`${API_BASE_URL}/workflows/list`, {
+  const response = await fetch(`${API_BASE_URL}/forms/workflows`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -200,21 +200,15 @@ export async function getAvailableWorkflows(): Promise<AvailableWorkflowsRespons
 
 // 獲取指定工作流的參數列表
 export async function getWorkflowParams(wfId: string): Promise<WorkflowParamsResponse> {
-  const response = await fetch(`${API_BASE_URL}/workflows/wf/${wfId}/params`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  // 使用表單模式端點獲取參數信息，然後提取基礎參數
+  const formSchema = await getWorkflowFormSchema(wfId);
 
-  if (!response.ok) {
-    // 處理驗證錯誤
-    if (response.status === 422) {
-      const error: HTTPValidationError = await response.json();
-      throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
-    }
-    throw new Error(`獲取工作流參數失敗: ${response.status} ${response.statusText}`);
-  }
+  // 從 fields 中提取 node_id, title, class_type
+  const params: WorkflowParam[] = formSchema.fields.map((field: any) => ({
+    node_id: field.node_id,
+    title: field.title,
+    class_type: field.class_type
+  }));
 
-  return response.json();
+  return params;
 }
