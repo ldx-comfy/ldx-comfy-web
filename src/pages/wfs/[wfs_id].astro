@@ -19,6 +19,7 @@ let loading = true;
 let error: string | null = null;
 let workflowTitle = wfs_id;
 let executionResult: any = null;
+let executionImages: string[] | null = null;
 let executionError: string | null = null;
 
 // Validate workflow ID
@@ -75,7 +76,9 @@ if (Astro.request.method === 'POST') {
     
     // Execute workflow
     const response = await executeWorkflowWithForm(workflowId, nodes);
-    executionResult = response.result;
+    // Normalize response and collect images directly for frontend display
+    executionImages = (response as any)?.images ?? (response as any)?.result?.images ?? null;
+    executionResult = (response as any)?.result ?? response;
   } catch (err: unknown) {
     console.error('Error executing workflow:', err);
     executionError = (err as Error).message || 'Failed to execute workflow';
@@ -122,21 +125,43 @@ if (Astro.request.method === 'POST') {
           </div>
           <div class="right-column">
             <div class="results-container">
-              {executionResult && (
+              {executionImages && executionImages.length > 0 && (
                 <div class="execution-result">
                   <h3>{t('dynamicworkflow.result')}:</h3>
-                  <pre>{JSON.stringify(executionResult, null, 2)}</pre>
+                  <div>
+                    {executionImages.map((img: string) => (
+                      <a
+                        href={img.startsWith('http') ? img : `http://127.0.0.1:1145/${img.replace(/^\/+/, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src={img.startsWith('http') ? img : `http://127.0.0.1:1145/${img.replace(/^\/+/, '')}`}
+                          alt="Result image"
+                          loading="lazy"
+                          style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;"
+                        />
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
-
+ 
               {executionError && (
                 <div class="execution-error">
                   <h3>{t('dynamicworkflow.error')}:</h3>
                   <p>{executionError}</p>
                 </div>
               )}
-
-              {!executionResult && !executionError && (
+ 
+              {!executionImages && executionResult && (
+                <div class="execution-result">
+                  <h3>{t('dynamicworkflow.result')}:</h3>
+                  <pre>{JSON.stringify(executionResult, null, 2)}</pre>
+                </div>
+              )}
+ 
+              {!executionImages && !executionResult && !executionError && (
                 <div class="no-results">
                   <div class="no-results-icon">📊</div>
                   <h3>{t('workflow.resultsWillAppearHere')}</h3>

@@ -5,7 +5,6 @@ import ImageEditor from './ImageEditor.astro';
 import PromptInput from './PromptInput.astro';
 import ToggleWithText from './ToggleWithText.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
-import { getWorkflowFormSchema, executeWorkflowWithForm, getExecutionStatus, cancelExecution } from '../api/workflows';
 
 interface WorkflowParam {
  node_id: string;
@@ -33,11 +32,14 @@ const t = getTranslator(lang);
 <div class="workflow-container">
   {
     params.map((param) => (
-      <div class="component-wrapper">
+      <div class="component-wrapper" data-node-id={param.node_id} data-class-type={param.class_type}>
         {(() => {
            if (param.class_type === 'LoadImageOutput') {
              return <ImageUploader title={param.title} />;
            } else if (param.class_type === 'Text') {
+             return <PromptInput placeholder={param.title} />;
+           } else if (param.class_type === 'CLIPTextEncode' || /CLIPTextEncode/.test(param.class_type)) {
+             // Map CLIP text encode nodes to a text prompt input
              return <PromptInput placeholder={param.title} />;
            } else if (param.class_type === 'Switch any [Crystools]') {
              return <ToggleWithText text={param.title} />;
@@ -56,7 +58,7 @@ const t = getTranslator(lang);
   }
   
   <div class="workflow-controls">
-    <form method="post" action="">
+    <form method="post" action="" id="workflow-form">
       <input type="hidden" name="workflowId" value={workflowId} />
       <input type="hidden" name="params" value={JSON.stringify(params)} />
       <button
@@ -65,6 +67,191 @@ const t = getTranslator(lang);
       >
         {t('dynamicworkflow.execute')}
       </button>
+
+      <script type="module">
+        (() => {
+          try {
+            const form = document.getElementById('workflow-form');
+            if (!form) return;
+
+            async function serializeParamsToHiddenInput() {
+              try {
+                const container = form.closest('.workflow-container') || document;
+                const wrappers = container.querySelectorAll('.component-wrapper');
+                const paramsInput = form.querySelector('input[name="params"]');
+                if (!paramsInput) return;
+
+                let params = [];
+                try { params = JSON.parse(paramsInput.value) || []; } catch {}
+                const paramsById = new Map((Array.isArray(params) ? params : []).map((p) => [String(p.node_id), p]));
+
+                wrappers.forEach((wrapEl) => {
+                  const nodeId = wrapEl.getAttribute('data-node-id');
+                  const classType = (wrapEl.getAttribute('data-class-type') || '');
+                  if (!nodeId) return;
+
+                  let valueProvided = null;
+
+                  if (classType === 'Text' || classType.includes('CLIPTextEncode')) {
+                    const ta = wrapEl.querySelector('textarea');
+                    if (ta) valueProvided = ta.value;
+                  } else if (classType === 'Switch any [Crystools]') {
+                    const cb = wrapEl.querySelector('input[type="checkbox"]');
+                    if (cb) valueProvided = cb.checked;
+                  }
+                  // LoadImageOutput 暂不在前端处理上传（需要专用上传接口）
+
+                  if (valueProvided !== null) {
+                    const base = paramsById.get(String(nodeId)) || { node_id: String(nodeId), title: '', class_type: classType };
+                    base.value = valueProvided;
+                    paramsById.set(String(nodeId), base);
+                  }
+                });
+
+                paramsInput.value = JSON.stringify(Array.from(paramsById.values()));
+              } catch (err) {
+                console.error('[DynamicWorkflow] serialize params failed:', err);
+              }
+            }
+
+            function renderLoading(root) {
+              if (!root) return;
+              root.innerHTML = `
+                <div class="execution-result">
+                  <h3>Loading...</h3>
+                  <div class="loading-spinner"></div>
+                </div>
+              `;
+            }
+
+            function escapeHtml(str) {
+              return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+            }
+
+            function renderResult(root, images, result, error) {
+              if (!root) return;
+              if (error) {
+                const errStr = String(error);
+                const isMultiline = /\n/.test(errStr);
+                root.innerHTML = isMultiline
+                  ? '<div class="execution-error"><h3>Error:</h3><pre>' + escapeHtml(errStr) + '</pre></div>'
+                  : '<div class="execution-error"><h3>Error:</h3><p>' + escapeHtml(errStr) + '</p></div>';
+                return;
+              }
+              if (images && images.length) {
+                const html = images.map((img) => {
+                  const url = String(img).startsWith('http')
+                    ? img
+                    : `http://127.0.0.1:1145/${String(img).replace(/^\/+/, '')}`;
+                  return `
+                    <a href="${url}" target="_blank" rel="noopener noreferrer">
+                      <img src="${url}" alt="Result image"
+                        loading="lazy"
+                        style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;" />
+                    </a>
+                  `;
+                }).join('');
+                root.innerHTML = `
+                  <div class="execution-result">
+                    <h3>Result:</h3>
+                    <div>${html}</div>
+                  </div>
+                `;
+                return;
+              }
+              if (result) {
+                root.innerHTML = `
+                  <div class="execution-result">
+                    <h3>Result:</h3>
+                    <pre>${escapeHtml(JSON.stringify(result, null, 2))}</pre>
+                  </div>
+                `;
+                return;
+              }
+              root.innerHTML = `
+                <div class="no-results">
+                  <div class="no-results-icon">📊</div>
+                  <h3>Results will appear here</h3>
+                  <p>Execute to see results</p>
+                </div>
+              `;
+            }
+
+            form.addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const submitBtn = form.querySelector('button[type="submit"]');
+              if (submitBtn) submitBtn.disabled = true;
+
+              await serializeParamsToHiddenInput();
+
+              const workflowIdInput = form.querySelector('input[name="workflowId"]');
+              const paramsInput = form.querySelector('input[name="params"]');
+              const workflowId = workflowIdInput ? String(workflowIdInput.value) : '';
+              const paramsJson = paramsInput ? String(paramsInput.value) : '[]';
+
+              const results = document.querySelector('.results-container');
+              renderLoading(results);
+
+              let reqUrl = '';
+
+              try {
+                const fd = new FormData();
+                fd.append('nodes', paramsJson);
+
+                reqUrl = `http://127.0.0.1:1145/api/v1/forms/workflows/${encodeURIComponent(workflowId)}/execute`;
+                const resp = await fetch(reqUrl, {
+                  method: 'POST',
+                  body: fd
+                });
+
+                if (!resp.ok) {
+                  let bodyText = '';
+                  try { bodyText = await resp.text(); } catch {}
+                  let headers = '';
+                  try {
+                    headers = Array.from(resp.headers.entries()).map(([k,v]) => k + ': ' + v).join('\n');
+                  } catch {}
+                  const message = [
+                    `HTTP ${resp.status} ${resp.statusText}`,
+                    `URL: ${reqUrl || '(unknown)'}`,
+                    headers ? `Headers:\n${headers}` : 'Headers: (unavailable)',
+                    `Body:\n${String(bodyText).slice(0, 2000)}`
+                  ].join('\n');
+                  throw new Error(message);
+                }
+
+                const data = await resp.json();
+                const images = (data && (data.images || (data.result && data.result.images))) || null;
+                const result = data && (data.result || data);
+
+                renderResult(results, images, result, null);
+              } catch (err) {
+                try { console.error('[DynamicWorkflow] fetch failed:', err); } catch {}
+                let detail = `[NetworkError] ${err && err.name ? err.name : 'Error'}: ${err && err.message ? err.message : String(err)}\n`;
+                try {
+                  detail += `URL: ${reqUrl || '(unknown)'}\n`;
+                  detail += `Online: ${typeof navigator !== 'undefined' ? navigator.onLine : 'n/a'}\n`;
+                  detail += `Time: ${new Date().toISOString()}\n`;
+                  detail += `User-Agent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'n/a'}\n`;
+                  if (err && err.stack) {
+                    detail += `Stack: ${String(err.stack).split('\n').slice(0, 8).join('\n')}\n`;
+                  }
+                } catch {}
+                renderResult(results, null, null, detail);
+              } finally {
+                if (submitBtn) submitBtn.disabled = false;
+              }
+            });
+          } catch (e) {
+            console.error('[DynamicWorkflow] init failed:', e);
+          }
+        })();
+      </script>
     </form>
   </div>
   
