@@ -49,7 +49,17 @@ if (Astro.request.method === 'POST') {
   try {
     const formData = await Astro.request.formData();
     const workflowId = formData.get('workflowId') as string;
-    const params = JSON.parse(formData.get('params') as string);
+
+    const paramsRaw = formData.get('params') as string;
+    console.log('[wfs] POST received. workflowId=%s paramsRaw.length=%d', workflowId, paramsRaw?.length ?? 0);
+
+    let params: any[] = [];
+    try {
+      params = JSON.parse(paramsRaw);
+    } catch (e) {
+      console.error('[wfs] Failed to parse params JSON:', e);
+      params = [];
+    }
     
     // Prepare nodes data (this is a simplified example)
     // In a real implementation, you would collect data from the form components
@@ -58,6 +68,10 @@ if (Astro.request.method === 'POST') {
       title: param.title,
       class_type: param.class_type
     })));
+
+    try {
+      console.log('[wfs] Prepared nodes typeof=%s length=%d preview=%s', typeof nodes, nodes?.length ?? 0, String(nodes).slice(0, 300));
+    } catch {}
     
     // Execute workflow
     const response = await executeWorkflowWithForm(workflowId, nodes);

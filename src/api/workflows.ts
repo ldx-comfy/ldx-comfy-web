@@ -79,16 +79,44 @@ export async function getWorkflowFormSchema(workflowId: string): Promise<Workflo
       const error: HTTPValidationError = await response.json();
       throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
     }
+    let bodyText = '';
+    try {
+      bodyText = await response.text();
+    } catch {}
+    console.error('[getWorkflowFormSchema] Failed to fetch schema. HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
     throw new Error(`獲取工作流表單模式失敗: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  const schema = await response.json();
+  try {
+    const fieldCount = Array.isArray((schema as any)?.fields) ? (schema as any).fields.length : 'n/a';
+    const keys = Object.keys(schema || {}).slice(0, 20).join(',');
+    console.debug('[getWorkflowFormSchema] workflowId=%s fields=%s keys=%s', workflowId, fieldCount, keys);
+  } catch {}
+  return schema;
 }
 
-// 通過表單執行工作流
+ // 通過表單執行工作流
 export async function executeWorkflowWithForm(workflowId: string, nodes: string): Promise<WorkflowExecutionResponse> {
   const formData = new FormData();
   formData.append('nodes', nodes);
+
+  // Debug: log outgoing payload shape to validate backend expectations
+  try {
+    console.debug('[executeWorkflowWithForm] workflowId=%s typeof nodes=%s length=%d', workflowId, typeof nodes, nodes?.length ?? 0);
+    // Iterate formData entries if supported by runtime
+    // @ts-ignore
+    if (typeof (formData as any).entries === 'function') {
+      // @ts-ignore
+      for (const [key, value] of (formData as any).entries()) {
+        const isBlob = typeof Blob !== 'undefined' && value instanceof Blob;
+        const summary = isBlob ? `Blob(${(value as Blob).type}, ${(value as Blob).size} bytes)` : String(value).slice(0, 200);
+        console.debug('[executeWorkflowWithForm] formData entry:', key, isBlob ? 'Blob' : typeof value, summary);
+      }
+    }
+  } catch (e) {
+    console.debug('[executeWorkflowWithForm] debug logging failed:', e);
+  }
 
   const response = await fetch(`${API_BASE_URL}/forms/workflows/${workflowId}/execute`, {
     method: 'POST',
@@ -101,7 +129,12 @@ export async function executeWorkflowWithForm(workflowId: string, nodes: string)
       const error: HTTPValidationError = await response.json();
       throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
     }
-    throw new Error(`執行工作流失敗: ${response.status} ${response.statusText}`);
+    let bodyText = '';
+    try {
+      bodyText = await response.text();
+    } catch {}
+    console.error('[executeWorkflowWithForm] HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
+    throw new Error(`執行工作流失敗: ${response.status} ${response.statusText} Body: ${String(bodyText).slice(0, 500)}`);
   }
 
   return response.json();
