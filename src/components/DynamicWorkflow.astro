@@ -98,8 +98,12 @@ const t = getTranslator(lang);
                   } else if (classType === 'Switch any [Crystools]') {
                     const cb = wrapEl.querySelector('input[type="checkbox"]');
                     if (cb) valueProvided = cb.checked;
+                  } else if (classType === 'LoadImageOutput') {
+                    const fi = wrapEl.querySelector('input[type="file"]');
+                    if (fi && fi.files && fi.files.length > 0) {
+                      valueProvided = fi.files[0].name;
+                    }
                   }
-                  // LoadImageOutput 暂不在前端处理上传（需要专用上传接口）
 
                   if (valueProvided !== null) {
                     const base = paramsById.get(String(nodeId)) || { node_id: String(nodeId), title: '', class_type: classType };
@@ -202,6 +206,24 @@ const t = getTranslator(lang);
               try {
                 const fd = new FormData();
                 fd.append('nodes', paramsJson);
+
+                // 附加圖片文件（來自 LoadImageOutput）
+                try {
+                  const container = form.closest('.workflow-container') || document;
+                  const wrappers = container.querySelectorAll('.component-wrapper');
+                  wrappers.forEach((wrapEl) => {
+                    const classType = String(wrapEl.getAttribute('data-class-type') || '');
+                    if (classType === 'LoadImageOutput') {
+                      const fi = wrapEl.querySelector('input[type="file"]');
+                      if (fi && fi.files && fi.files.length > 0) {
+                        const file = fi.files[0];
+                        fd.append('files', file, file.name);
+                      }
+                    }
+                  });
+                } catch (e) {
+                  console.warn('[DynamicWorkflow] attach files failed:', e);
+                }
 
                 reqUrl = `http://127.0.0.1:1145/api/v1/forms/workflows/${encodeURIComponent(workflowId)}/execute`;
                 const resp = await fetch(reqUrl, {

@@ -19,7 +19,7 @@ const t = getTranslator(lang);
   </div>
   <img id="image-preview" class="image-preview" src="" alt="Image preview" hidden />
   <button id="edit-btn" class="edit-btn" hidden>{t('imageuploader.editButton')}</button>
-  <input type="file" id="file-input" accept="image/*" hidden />
+  <input type="file" id="file-input" name="files" accept="image/*" hidden />
   <!-- Hidden element to store translated messages -->
   <div id="translations" style="display: none;"
        data-alert-message="{t('imageuploader.alertMessage')}">
@@ -216,10 +216,7 @@ const t = getTranslator(lang);
     // You can also proceed with uploading the file to a server here.
     console.log(`File selected: ${file.name}, size: ${file.size} bytes`);
 
-    // Reset file input if needed
-    if (fileInput) {
-      fileInput.value = '';
-    }
+    // 保留所选文件于 input.files，供提交时 FormData 附带
   }
 
   if (uploadBox && fileInput) {
