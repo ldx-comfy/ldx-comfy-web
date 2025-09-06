@@ -23,7 +23,9 @@
     "appName": "アプリケーション",
     "home": "ホーム",
     "about": "私たちについて",
-    "contact": "お問い合わせ"
+    "contact": "お問い合わせ",
+    "me": "マイプロフィール",
+    "admin": "管理者"
   },
   "theme": {
     "light": "ライト",
@@ -40,7 +42,8 @@
     "unknownComponent": "不明なコンポーネントタイプ",
     "nodeId": "ノードID",
     "title": "タイトル",
-    "execute": "Execute",
+    "execute": "実行",
+    "result": "結果",
     "error": "エラー"
   },
   "homepage": {
@@ -56,7 +59,48 @@
     "backToWorkflows": "ワークフロー一覧に戻る",
     "loading": "ワークフローを読み込み中...",
     "failedToLoad": "ワークフローの読み込みに失敗しました",
-    "returnToList": "ワークフロー一覧に戻る"
+    "returnToList": "ワークフロー一覧に戻る",
+    "parameters": "パラメータ",
+    "resultsWillAppearHere": "結果はここに表示されます",
+    "executeToSeeResults": "ワークフローを実行して結果を確認"
+  },
+  "admin": {
+    "title": "管理者ページ",
+    "description": "管理者ロールのみアクセス可能です。このページは保護されたAPIエンドポイント /api/v1/auth/admin/ping を呼び出して可用性を確認します。",
+    "currentIdentity": "現在の身元",
+    "protectedApiValidation": "保護されたAPIの検証",
+    "apiCallFailed": "API呼び出しに失敗しました: {error}",
+    "rbacDemo": "コンポーネントレベルのRBACデモ",
+    "notAdminMessage": "あなたは管理者ではないため、このセクションは表示できません。",
+    "adminOnlySection": "管理者のみ:",
+    "rbacControlledContent": "RBACで制御されたコンテンツを表示しています。",
+    "backToHome": "ホームに戻る",
+    "logout": "ログアウト"
+  },
+  "login": {
+    "title": "サインイン",
+    "subtitle": "ログイン方法を選択し、認証情報を入力してください",
+    "usernamePasswordTab": "ユーザー名とパスワード",
+    "codeTab": "認証コード",
+    "usernameRequired": "ユーザー名とパスワードは必須です",
+    "codeRequired": "認証コードは必須です",
+    "unsupportedLoginMethod": "サポートされていないログイン方法です",
+    "loginFailed": "ログインに失敗しました。もう一度お試しください",
+    "usernameLabel": "ユーザー名",
+    "passwordLabel": "パスワード",
+    "codeLabel": "認証コード",
+    "loginButton": "サインイン",
+    "successRedirect": "ログイン成功後、次のページにリダイレクトされます:"
+  },
+  "me": {
+    "title": "マイプロフィール",
+    "logout": "ログアウト",
+    "backToHome": "ホームに戻る",
+    "rbacDemo": "RBACデモ",
+    "adminOnlyArea": "以下のエリアは管理者ロールのみが表示可能です:",
+    "noAdminPermission": "管理者権限がありません。コンテンツは非表示です。",
+    "adminOnlyTitle": "管理者専用エリア:",
+    "adminOnlyContent": "管理者のみが表示可能なコンテンツを表示しています。"
   },
   "common": {
     "loading": "読み込み中...",

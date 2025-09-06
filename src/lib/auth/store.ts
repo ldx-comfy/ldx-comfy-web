@@ -12,8 +12,7 @@ export type CookiesWriter = {
 
 function isProd(): boolean {
   try {
-    // @ts-ignore
-    return Boolean((import.meta as any)?.env?.PROD);
+    return Boolean(import.meta.env.PROD);
   } catch {}
   try {
     return (globalThis as any)?.process?.env?.NODE_ENV === 'production';

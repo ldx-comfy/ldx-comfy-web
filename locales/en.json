@@ -23,7 +23,9 @@
     "appName": "App Name",
     "home": "Home",
     "about": "About Us",
-    "contact": "Contact Us"
+    "contact": "Contact Us",
+    "me": "My Profile",
+    "admin": "Admin"
   },
   "theme": {
     "light": "Light",
@@ -61,6 +63,44 @@
     "parameters": "Parameters",
     "resultsWillAppearHere": "Results will appear here",
     "executeToSeeResults": "Execute the workflow to see results"
+  },
+  "admin": {
+    "title": "Admin Page",
+    "description": "Accessible only to admin role. This page will call the protected API endpoint /api/v1/auth/admin/ping to verify availability.",
+    "currentIdentity": "Current Identity",
+    "protectedApiValidation": "Protected API Validation",
+    "apiCallFailed": "API call failed: {error}",
+    "rbacDemo": "Component-Level RBAC Demo",
+    "notAdminMessage": "You are not an admin, so you cannot see this section.",
+    "adminOnlySection": "Admin only:",
+    "rbacControlledContent": "You are viewing content controlled by RBAC.",
+    "backToHome": "Back to Home",
+    "logout": "Logout"
+  },
+  "login": {
+    "title": "Sign In",
+    "subtitle": "Please select a login method and enter your credentials",
+    "usernamePasswordTab": "Username & Password",
+    "codeTab": "Authorization Code",
+    "usernameRequired": "Username and password are required",
+    "codeRequired": "Authorization code is required",
+    "unsupportedLoginMethod": "Unsupported login method",
+    "loginFailed": "Login failed, please try again",
+    "usernameLabel": "Username",
+    "passwordLabel": "Password",
+    "codeLabel": "Authorization Code",
+    "loginButton": "Sign In",
+    "successRedirect": "You will be redirected to:"
+  },
+  "me": {
+    "title": "My Profile",
+    "logout": "Logout",
+    "backToHome": "Back to Home",
+    "rbacDemo": "RBAC Demo",
+    "adminOnlyArea": "The area below is visible only to admin role:",
+    "noAdminPermission": "No admin permission, content hidden.",
+    "adminOnlyTitle": "Admin-only area:",
+    "adminOnlyContent": "You are viewing content visible only to admins."
   },
   "common": {
     "loading": "Loading...",

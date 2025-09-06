@@ -23,13 +23,13 @@ if (Astro.request.method === 'POST') {
   try {
     const form = await Astro.request.formData();
     const mode = String(form.get('mode') || 'password').toLowerCase();
-    const secure = Boolean((import.meta as any)?.env?.PROD);
+    const secure = Boolean(import.meta.env.PROD);
 
     if (mode === 'password') {
       const username = String(form.get('username') || '');
       const password = String(form.get('password') || '');
       if (!username || !password) {
-        throw new Error('用户名与密码必填');
+        throw new Error(t('login.usernameRequired'));
       }
       const result = await loginPassword(username, password);
       // httpOnly for SSR & backend calls
@@ -49,7 +49,7 @@ if (Astro.request.method === 'POST') {
     } else if (mode === 'code') {
       const code = String(form.get('code') || '');
       if (!code) {
-        throw new Error('授权码必填');
+        throw new Error(t('login.codeRequired'));
       }
       const result = await loginCode(code);
       setAuthCookies(Astro.cookies, result.token, result.expires_in);
@@ -64,23 +64,23 @@ if (Astro.request.method === 'POST') {
       });
       return Astro.redirect(nextParam);
     } else {
-      throw new Error('不支持的登录方式');
+      throw new Error(t('login.unsupportedLoginMethod'));
     }
   } catch (e: any) {
-    error = e?.message || '登录失败，请重试';
+    error = e?.message || t('login.loginFailed');
   }
 }
 ---
 
-<Layout title="Sign In">
+<Layout title={t('login.title')}>
   <div class="login-page">
     <div class="login-card">
-      <h1 class="title">登录</h1>
-      <p class="subtitle">请选择登录方式并输入凭据</p>
+      <h1 class="title">{t('login.title')}</h1>
+      <p class="subtitle">{t('login.subtitle')}</p>
 
       <div class="tabs">
-        <a href={`/login?mode=password&next=${encodeURIComponent(nextParam)}`} class={`tab ${currentMode === 'password' ? 'active' : ''}`}>用户名密码</a>
-        <a href={`/login?mode=code&next=${encodeURIComponent(nextParam)}`} class={`tab ${currentMode === 'code' ? 'active' : ''}`}>授权码</a>
+        <a href={`/login?mode=password&next=${encodeURIComponent(nextParam)}`} class={`tab ${currentMode === 'password' ? 'active' : ''}`}>{t('login.usernamePasswordTab')}</a>
+        <a href={`/login?mode=code&next=${encodeURIComponent(nextParam)}`} class={`tab ${currentMode === 'code' ? 'active' : ''}`}>{t('login.codeTab')}</a>
       </div>
 
       {error && (
@@ -95,29 +95,29 @@ if (Astro.request.method === 'POST') {
           <input type="hidden" name="mode" value="password" />
           <input type="hidden" name="next" value={nextParam} />
           <div class="field">
-            <label for="username">用户名</label>
+            <label for="username">{t('login.usernameLabel')}</label>
             <input id="username" name="username" type="text" placeholder="demo" required />
           </div>
           <div class="field">
-            <label for="password">密码</label>
-            <input id="password" name="password" type="password" placeholder="••••••••" required />
+            <label for="password">{t('login.passwordLabel')}</label>
+            <input id="password" name="password" type="password" placeholder="•••••••" required />
           </div>
-          <button type="submit" class="submit">登录</button>
+          <button type="submit" class="submit">{t('login.loginButton')}</button>
         </form>
       ) : (
         <form method="POST" class="form">
           <input type="hidden" name="mode" value="code" />
           <input type="hidden" name="next" value={nextParam} />
           <div class="field">
-            <label for="code">授权码</label>
+            <label for="code">{t('login.codeLabel')}</label>
             <input id="code" name="code" type="text" placeholder="DEMO-CODE" required />
           </div>
-          <button type="submit" class="submit">登录</button>
+          <button type="submit" class="submit">{t('login.loginButton')}</button>
         </form>
       )}
 
       <div class="helper">
-        <p>登录成功后将跳转至：<code>{nextParam}</code></p>
+        <p>{t('login.successRedirect')} <code>{nextParam}</code></p>
       </div>
     </div>
   </div>

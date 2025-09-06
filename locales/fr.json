@@ -19,11 +19,13 @@
     "placeholder": "Veuillez saisir le prompt...",
     "submit": "Soumettre"
   },
-  "sidebar": {
+ "sidebar": {
     "appName": "Mon Application",
     "home": "Accueil",
     "about": "À Propos",
-    "contact": "Contact"
+    "contact": "Contact",
+    "me": "Mon Profil",
+    "admin": "Admin"
   },
   "theme": {
     "light": "Clair",
@@ -36,11 +38,12 @@
   "togglewithtext": {
     "toggleText": "Basculer"
   },
-  "dynamicworkflow": {
+ "dynamicworkflow": {
     "unknownComponent": "Type de composant inconnu",
     "nodeId": "ID du nœud",
     "title": "Titre",
-    "execute": "Execute",
+    "execute": "Exécuter",
+    "result": "Résultat",
     "error": "Erreur"
   },
   "homepage": {
@@ -56,7 +59,48 @@
     "backToWorkflows": "Retour à la liste des flux de travail",
     "loading": "Chargement du flux de travail...",
     "failedToLoad": "Échec du chargement du flux de travail",
-    "returnToList": "Retour à la liste des flux de travail"
+    "returnToList": "Retour à la liste des flux de travail",
+    "parameters": "Paramètres",
+    "resultsWillAppearHere": "Les résultats apparaîtront ici",
+    "executeToSeeResults": "Exécutez le flux de travail pour voir les résultats"
+ },
+  "admin": {
+    "title": "Page Administrateur",
+    "description": "Accessible uniquement au rôle administrateur. Cette page appellera le point de terminaison API protégé /api/v1/auth/admin/ping pour vérifier la disponibilité.",
+    "currentIdentity": "Identité Actuelle",
+    "protectedApiValidation": "Validation de l'API Protégée",
+    "apiCallFailed": "Échec de l'appel API : {error}",
+    "rbacDemo": "Démonstration RBAC au Niveau des Composants",
+    "notAdminMessage": "Vous n'êtes pas administrateur, donc vous ne pouvez pas voir cette section.",
+    "adminOnlySection": "Administrateurs uniquement :",
+    "rbacControlledContent": "Vous consultez du contenu contrôlé par RBAC.",
+    "backToHome": "Retour à l'Accueil",
+    "logout": "Déconnexion"
+  },
+  "login": {
+    "title": "Connexion",
+    "subtitle": "Veuillez sélectionner une méthode de connexion et saisir vos identifiants",
+    "usernamePasswordTab": "Nom d'utilisateur & Mot de passe",
+    "codeTab": "Code d'autorisation",
+    "usernameRequired": "Le nom d'utilisateur et le mot de passe sont requis",
+    "codeRequired": "Le code d'autorisation est requis",
+    "unsupportedLoginMethod": "Méthode de connexion non prise en charge",
+    "loginFailed": "Échec de la connexion, veuillez réessayer",
+    "usernameLabel": "Nom d'utilisateur",
+    "passwordLabel": "Mot de passe",
+    "codeLabel": "Code d'autorisation",
+    "loginButton": "Se connecter",
+    "successRedirect": "Vous serez redirigé vers :"
+  },
+  "me": {
+    "title": "Mon Profil",
+    "logout": "Déconnexion",
+    "backToHome": "Retour à l'Accueil",
+    "rbacDemo": "Démonstration RBAC",
+    "adminOnlyArea": "La zone ci-dessous est visible uniquement pour le rôle administrateur :",
+    "noAdminPermission": "Pas de permission administrateur, contenu masqué.",
+    "adminOnlyTitle": "Zone réservée aux administrateurs :",
+    "adminOnlyContent": "Vous consultez du contenu visible uniquement par les administrateurs."
   },
   "common": {
     "loading": "Chargement...",

@@ -30,37 +30,37 @@ try {
 }
 ---
 
-<Layout title="Admin">
+<Layout title={t('admin.title')}>
   <div class="admin-page">
-    <h1 class="title">管理员页面</h1>
-    <p class="desc">仅 admin 角色可访问。本页将调用受保护接口 /api/v1/auth/admin/ping 验证可用性。</p>
+    <h1 class="title">{t('admin.title')}</h1>
+    <p class="desc">{t('admin.description')}</p>
 
     <div class="card">
-      <h3>当前身份</h3>
+      <h3>{t('admin.currentIdentity')}</h3>
       <pre class="json">{JSON.stringify(me, null, 2)}</pre>
     </div>
 
     <div class="card">
-      <h3>受保护接口验证</h3>
+      <h3>{t('admin.protectedApiValidation')}</h3>
       {pingError ? (
-        <div class="error">调用失败：{pingError}</div>
+        <div class="error">{t('admin.apiCallFailed', { error: pingError })}</div>
       ) : (
         <pre class="json">{JSON.stringify(pingResult, null, 2)}</pre>
       )}
     </div>
 
     <div class="rbac-demo">
-      <h3>组件级 RBAC 示例</h3>
-      <CanCmp me={me} rolesAny={['admin']} elseText="您不是管理员，看不到这一段内容。">
+      <h3>{t('admin.rbacDemo')}</h3>
+      <CanCmp me={me} rolesAny={['admin']} elseText={t('admin.notAdminMessage')}>
         <div class="admin-only">
-          <strong>仅 admin 可见：</strong> 你正在查看受 RBAC 控制的区块。
+          <strong>{t('admin.adminOnlySection')}</strong> {t('admin.rbacControlledContent')}
         </div>
       </CanCmp>
     </div>
 
     <div class="actions">
-      <a class="btn secondary" href="/">返回首页</a>
-      <a class="btn" href="/logout?next=/admin">退出登录</a>
+      <a class="btn secondary" href="/">{t('admin.backToHome')}</a>
+      <a class="btn" href="/logout?next=/admin">{t('admin.logout')}</a>
     </div>
   </div>
 </Layout>

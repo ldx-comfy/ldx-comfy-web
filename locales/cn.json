@@ -23,7 +23,9 @@
     "appName": "我的应用程序",
     "home": "首页",
     "about": "关于我们",
-    "contact": "联系我们"
+    "contact": "联系我们",
+    "me": "我的",
+    "admin": "管理员"
   },
   "theme": {
     "light": "浅色",
@@ -61,6 +63,44 @@
     "parameters": "参数",
     "resultsWillAppearHere": "结果将显示在这里",
     "executeToSeeResults": "执行工作流以查看结果"
+  },
+  "admin": {
+    "title": "管理员页面",
+    "description": "仅 admin 角色可访问。本页将调用受保护接口 /api/v1/auth/admin/ping 验证可用性。",
+    "currentIdentity": "当前身份",
+    "protectedApiValidation": "受保护接口验证",
+    "apiCallFailed": "调用失败：{error}",
+    "rbacDemo": "组件级 RBAC 示例",
+    "notAdminMessage": "您不是管理员，看不到这一段内容。",
+    "adminOnlySection": "仅 admin 可见：",
+    "rbacControlledContent": "你正在查看受 RBAC 控制的区块。",
+    "backToHome": "返回首页",
+    "logout": "退出登录"
+  },
+  "login": {
+    "title": "登录",
+    "subtitle": "请选择登录方式并输入凭据",
+    "usernamePasswordTab": "用户名密码",
+    "codeTab": "授权码",
+    "usernameRequired": "用户名与密码必填",
+    "codeRequired": "授权码必填",
+    "unsupportedLoginMethod": "不支持的登录方式",
+    "loginFailed": "登录失败，请重试",
+    "usernameLabel": "用户名",
+    "passwordLabel": "密码",
+    "codeLabel": "授权码",
+    "loginButton": "登录",
+    "successRedirect": "登录成功后将跳转至："
+  },
+  "me": {
+    "title": "当前身份",
+    "logout": "退出登录",
+    "backToHome": "返回首页",
+    "rbacDemo": "RBAC 示例",
+    "adminOnlyArea": "下方区域仅 admin 角色可见：",
+    "noAdminPermission": "无管理员权限，隐藏内容。",
+    "adminOnlyTitle": "管理员专属区域：",
+    "adminOnlyContent": "你正在查看仅 admin 可见的内容。"
   },
   "common": {
     "loading": "加载中...",

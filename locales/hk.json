@@ -23,7 +23,9 @@
     "appName": "我的應用程式",
     "home": "首頁",
     "about": "關於我們",
-    "contact": "聯絡我們"
+    "contact": "聯絡我們",
+    "me": "我的",
+    "admin": "管理員"
   },
   "theme": {
     "light": "淺色",
@@ -40,7 +42,8 @@
     "unknownComponent": "未知元件類型",
     "nodeId": "節點ID",
     "title": "標題",
-    "execute": "Execute",
+    "execute": "執行",
+    "result": "結果",
     "error": "錯誤"
   },
   "homepage": {
@@ -56,7 +59,48 @@
     "backToWorkflows": "返回工作流程列表",
     "loading": "正在載入工作流程...",
     "failedToLoad": "工作流程載入失敗",
-    "returnToList": "返回工作流程列表"
+    "returnToList": "返回工作流程列表",
+    "parameters": "參數",
+    "resultsWillAppearHere": "結果將顯示在這裡",
+    "executeToSeeResults": "執行工作流程以查看結果"
+  },
+  "admin": {
+    "title": "管理員頁面",
+    "description": "僅限管理員角色訪問。此頁面將調用受保護的 API 端點 /api/v1/auth/admin/ping 以驗證可用性。",
+    "currentIdentity": "當前身份",
+    "protectedApiValidation": "受保護的 API 驗證",
+    "apiCallFailed": "調用失敗：{error}",
+    "rbacDemo": "組件級 RBAC 示範",
+    "notAdminMessage": "您不是管理員，因此看不到此部分。",
+    "adminOnlySection": "僅限管理員：",
+    "rbacControlledContent": "您正在查看受 RBAC 控制的內容。",
+    "backToHome": "返回首頁",
+    "logout": "登出"
+  },
+  "login": {
+    "title": "登入",
+    "subtitle": "請選擇登入方式並輸入憑證",
+    "usernamePasswordTab": "用戶名和密碼",
+    "codeTab": "授權碼",
+    "usernameRequired": "用戶名和密碼為必填項",
+    "codeRequired": "授權碼為必填項",
+    "unsupportedLoginMethod": "不支援的登入方式",
+    "loginFailed": "登入失敗，請重試",
+    "usernameLabel": "用戶名",
+    "passwordLabel": "密碼",
+    "codeLabel": "授權碼",
+    "loginButton": "登入",
+    "successRedirect": "登入成功後將跳轉至："
+  },
+  "me": {
+    "title": "我的個人資料",
+    "logout": "登出",
+    "backToHome": "返回首頁",
+    "rbacDemo": "RBAC 示範",
+    "adminOnlyArea": "以下區域僅管理員角色可見：",
+    "noAdminPermission": "無管理員權限，內容已隱藏。",
+    "adminOnlyTitle": "管理員專屬區域：",
+    "adminOnlyContent": "您正在查看僅管理員可見的內容。"
   },
   "common": {
     "loading": "載入中...",
