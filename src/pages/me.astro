@@ -1,0 +1,99 @@
+---
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import { getTranslator } from '@gudupao/astro-i18n';
+import { ensureMeSSR } from '../lib/auth/guard';
+
+import CanCmp from '../components/Can.astro';
+
+// i18n
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
+
+// Guard: require logged-in and fetch claims
+const cookieHeader = Astro.request.headers.get('cookie');
+const guard = await ensureMeSSR(Astro.request.url, cookieHeader);
+if (guard.response) {
+  // Not logged in or token invalid -> redirect to login
+  return guard.response;
+}
+const me = guard.me!;
+---
+
+<Layout title="My Profile">
+  <div class="me-page">
+    <h1 class="title">当前身份</h1>
+    <div class="card">
+      <pre class="json">{JSON.stringify(me, null, 2)}</pre>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="/logout?next=/me">退出登录</a>
+      <a class="btn secondary" href="/">返回首页</a>
+    </div>
+
+    <div class="rbac-demo">
+      <h2>RBAC 示例</h2>
+      <p>下方区域仅 admin 角色可见：</p>
+      <CanCmp me={me} rolesAny={['admin']} elseText="无管理员权限，隐藏内容。">
+        <div class="admin-only">
+          <strong>管理员专属区域：</strong> 你正在查看仅 admin 可见的内容。
+        </div>
+      </CanCmp>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .me-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .title {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: var(--text-primary);
+  }
+  .card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .json {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    background: var(--accent-color);
+    color: #fff;
+    border: 1px solid var(--accent-color);
+  }
+  .btn.secondary {
+    background: transparent;
+    color: var(--accent-color);
+  }
+  .rbac-demo {
+    margin-top: 12px;
+  }
+  .admin-only {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+  }
+</style>

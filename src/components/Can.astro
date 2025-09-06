@@ -1,0 +1,52 @@
+---
+import type { MeClaims } from '../lib/auth/service';
+
+interface Props {
+  me?: MeClaims | null;
+  rolesAny?: string[];
+  rolesAll?: string[];
+  groupsAny?: string[];
+  groupsAll?: string[];
+  elseText?: string;
+}
+
+const {
+  me = null,
+  rolesAny = [],
+  rolesAll = [],
+  groupsAny = [],
+  groupsAll = [],
+  elseText = ''
+} = Astro.props as Props;
+
+function hasAll(req: string[] = [], actual?: string[] | null): boolean {
+  if (!req || req.length === 0) return true;
+  const set = new Set((actual || []).filter(Boolean));
+  return req.every((r) => set.has(r));
+}
+
+function hasAny(req: string[] = [], actual?: string[] | null): boolean {
+  if (!req || req.length === 0) return true;
+  const set = new Set((actual || []).filter(Boolean));
+  return req.some((r) => set.has(r));
+}
+
+const allowed =
+  hasAll(rolesAll, me?.roles) &&
+  hasAny(rolesAny, me?.roles) &&
+  hasAll(groupsAll, me?.groups) &&
+  hasAny(groupsAny, me?.groups);
+---
+
+{allowed ? (
+  <slot />
+) : elseText ? (
+  <span class="can-fallback">{elseText}</span>
+) : null}
+
+<style>
+  .can-fallback {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+</style>

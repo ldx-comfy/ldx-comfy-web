@@ -6,6 +6,7 @@ import Layout from '../../layouts/Layout.astro';
 import DynamicWorkflow from '../../components/DynamicWorkflow.astro';
 import { getWorkflowParams, executeWorkflowWithForm } from '../../api/workflows';
 import { getTranslator } from '@gudupao/astro-i18n';
+import { toBackendAbsoluteUrl } from '../../lib/api/client';
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -31,7 +32,7 @@ if (!wfs_id) {
   
   try {
     // Get workflow parameters
-    workflowParams = await getWorkflowParams(wfs_id);
+    workflowParams = await getWorkflowParams(wfs_id, { cookies: Astro.request.headers.get('cookie') || undefined });
     console.log(`Workflow ${wfs_id} parameters:`, workflowParams);
     
     // Set a more user-friendly title
@@ -75,7 +76,7 @@ if (Astro.request.method === 'POST') {
     } catch {}
     
     // Execute workflow
-    const response = await executeWorkflowWithForm(workflowId, nodes);
+    const response = await executeWorkflowWithForm(workflowId, nodes, { cookies: Astro.request.headers.get('cookie') || undefined });
     // Normalize response and collect images directly for frontend display
     executionImages = (response as any)?.images ?? (response as any)?.result?.images ?? null;
     executionResult = (response as any)?.result ?? response;
@@ -131,12 +132,12 @@ if (Astro.request.method === 'POST') {
                   <div>
                     {executionImages.map((img: string) => (
                       <a
-                        href={img.startsWith('http') ? img : `http://127.0.0.1:1145/${img.replace(/^\/+/, '')}`}
+                        href={img.startsWith('http') ? img : toBackendAbsoluteUrl(img)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
                         <img
-                          src={img.startsWith('http') ? img : `http://127.0.0.1:1145/${img.replace(/^\/+/, '')}`}
+                          src={img.startsWith('http') ? img : toBackendAbsoluteUrl(img)}
                           alt="Result image"
                           loading="lazy"
                           style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;"

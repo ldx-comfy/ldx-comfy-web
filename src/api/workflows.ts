@@ -1,4 +1,7 @@
-// src/api/workflows.ts
+// src/api/workflows.ts (refactored to unified API client with env + SSR cookie passthrough)
+import { apiGet, apiPost, apiFetch, type ApiContext } from '../lib/api/client';
+
+// Types
 export interface WorkflowParam {
   node_id: string;
   title: string;
@@ -45,49 +48,40 @@ type ExecutionStatusResponse = WorkflowExecutionResponse;
 type HealthStatusResponse = HealthStatus;
 type ComfyUIStatusResponse = ComfyUIStatus;
 
-// 基礎 API 配置
-const API_BASE_URL = 'http://127.0.0.1:1145/api/v1';
+// Helpers
+function ensureOk(resp: Response): Response {
+  if (!resp.ok) {
+    throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+  }
+  return resp;
+}
 
 // 獲取所有工作流列表
-export async function getWorkflowList(): Promise<WorkflowListResponse> {
-  const response = await fetch(`${API_BASE_URL}/forms/workflows`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`獲取工作流列表失敗: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+export async function getWorkflowList(ctx?: ApiContext): Promise<WorkflowListResponse> {
+  return apiGet<WorkflowListResponse>('/forms/workflows', ctx);
 }
 
 // 獲取工作流表單模式
-export async function getWorkflowFormSchema(workflowId: string): Promise<WorkflowFormSchemaResponse> {
-  const response = await fetch(`${API_BASE_URL}/forms/workflows/${workflowId}/form-schema`, {
+export async function getWorkflowFormSchema(workflowId: string, ctx?: ApiContext): Promise<WorkflowFormSchemaResponse> {
+  const resp = await apiFetch(`/forms/workflows/${workflowId}/form-schema`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+    ctx,
+    rawResponse: true,
+  }) as unknown as Response;
 
-  if (!response.ok) {
-    // 處理驗證錯誤
-    if (response.status === 422) {
-      const error: HTTPValidationError = await response.json();
-      throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
+  if (!resp.ok) {
+    if (resp.status === 422) {
+      let body: HTTPValidationError | undefined;
+      try { body = await resp.json(); } catch {}
+      throw new Error(`驗證錯誤: ${JSON.stringify(body?.detail ?? [])}`);
     }
     let bodyText = '';
-    try {
-      bodyText = await response.text();
-    } catch {}
-    console.error('[getWorkflowFormSchema] Failed to fetch schema. HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
-    throw new Error(`獲取工作流表單模式失敗: ${response.status} ${response.statusText}`);
+    try { bodyText = await resp.text(); } catch {}
+    console.error('[getWorkflowFormSchema] Failed. HTTP %s %s. Body: %s', resp.status, resp.statusText, String(bodyText).slice(0, 2000));
+    throw new Error(`獲取工作流表單模式失敗: ${resp.status} ${resp.statusText}`);
   }
 
-  const schema = await response.json();
+  const schema = await resp.json();
   try {
     const fieldCount = Array.isArray((schema as any)?.fields) ? (schema as any).fields.length : 'n/a';
     const keys = Object.keys(schema || {}).slice(0, 20).join(',');
@@ -96,15 +90,13 @@ export async function getWorkflowFormSchema(workflowId: string): Promise<Workflo
   return schema;
 }
 
- // 通過表單執行工作流
-export async function executeWorkflowWithForm(workflowId: string, nodes: string): Promise<WorkflowExecutionResponse> {
+// 通過表單執行工作流
+export async function executeWorkflowWithForm(workflowId: string, nodes: string, ctx?: ApiContext): Promise<WorkflowExecutionResponse> {
   const formData = new FormData();
   formData.append('nodes', nodes);
 
-  // Debug: log outgoing payload shape to validate backend expectations
   try {
     console.debug('[executeWorkflowWithForm] workflowId=%s typeof nodes=%s length=%d', workflowId, typeof nodes, nodes?.length ?? 0);
-    // Iterate formData entries if supported by runtime
     // @ts-ignore
     if (typeof (formData as any).entries === 'function') {
       // @ts-ignore
@@ -118,130 +110,61 @@ export async function executeWorkflowWithForm(workflowId: string, nodes: string)
     console.debug('[executeWorkflowWithForm] debug logging failed:', e);
   }
 
-  const response = await fetch(`${API_BASE_URL}/forms/workflows/${workflowId}/execute`, {
+  const resp = await apiFetch(`/forms/workflows/${workflowId}/execute`, {
     method: 'POST',
     body: formData,
-  });
+    ctx,
+    rawResponse: true,
+  }) as unknown as Response;
 
-  if (!response.ok) {
-    // 處理驗證錯誤
-    if (response.status === 422) {
-      const error: HTTPValidationError = await response.json();
-      throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
+  if (!resp.ok) {
+    if (resp.status === 422) {
+      let body: HTTPValidationError | undefined;
+      try { body = await resp.json(); } catch {}
+      throw new Error(`驗證錯誤: ${JSON.stringify(body?.detail ?? [])}`);
     }
     let bodyText = '';
-    try {
-      bodyText = await response.text();
-    } catch {}
-    console.error('[executeWorkflowWithForm] HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
-    throw new Error(`執行工作流失敗: ${response.status} ${response.statusText} Body: ${String(bodyText).slice(0, 500)}`);
+    try { bodyText = await resp.text(); } catch {}
+    console.error('[executeWorkflowWithForm] HTTP %s %s. Body: %s', resp.status, resp.statusText, String(bodyText).slice(0, 2000));
+    throw new Error(`執行工作流失敗: ${resp.status} ${resp.statusText} Body: ${String(bodyText).slice(0, 500)}`);
   }
 
-  return response.json();
+  return resp.json();
 }
 
 // 獲取執行狀態
-export async function getExecutionStatus(executionId: string): Promise<ExecutionStatusResponse> {
-  const response = await fetch(`${API_BASE_URL}/forms/executions/${executionId}/status`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    // 處理驗證錯誤
-    if (response.status === 422) {
-      const error: HTTPValidationError = await response.json();
-      throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
-    }
-    throw new Error(`獲取執行狀態失敗: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+export async function getExecutionStatus(executionId: string, ctx?: ApiContext): Promise<ExecutionStatusResponse> {
+  return apiGet<ExecutionStatusResponse>(`/forms/executions/${executionId}/status`, ctx);
 }
 
 // 取消執行
-export async function cancelExecution(executionId: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/forms/executions/${executionId}`, {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    // 處理驗證錯誤
-    if (response.status === 422) {
-      const error: HTTPValidationError = await response.json();
-      throw new Error(`驗證錯誤: ${JSON.stringify(error.detail)}`);
-    }
-    throw new Error(`取消執行失敗: ${response.status} ${response.statusText}`);
-  }
-
-  // DELETE 請求通常不需要返回內容
+export async function cancelExecution(executionId: string, ctx?: ApiContext): Promise<void> {
+  await apiFetch(`/forms/executions/${executionId}`, { method: 'DELETE', ctx });
   return;
 }
 
 // 獲取系統整體健康狀態
-export async function getSystemHealth(): Promise<HealthStatusResponse> {
-  const response = await fetch(`${API_BASE_URL}/health/`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`獲取系統健康狀態失敗: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+export async function getSystemHealth(ctx?: ApiContext): Promise<HealthStatusResponse> {
+  return apiGet<HealthStatusResponse>('/health/', ctx);
 }
 
 // 獲取 ComfyUI 後端健康狀態
-export async function getComfyUIHealth(): Promise<ComfyUIStatusResponse> {
-  const response = await fetch(`${API_BASE_URL}/health/comfyui`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`獲取 ComfyUI 健康狀態失敗: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+export async function getComfyUIHealth(ctx?: ApiContext): Promise<ComfyUIStatusResponse> {
+  return apiGet<ComfyUIStatusResponse>('/health/comfyui', ctx);
 }
 
-// 獲取可用工作流列表
-export async function getAvailableWorkflows(): Promise<AvailableWorkflowsResponse> {
-  const response = await fetch(`${API_BASE_URL}/forms/workflows`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`獲取可用工作流列表失敗: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
+// 獲取可用工作流列表（别名）
+export async function getAvailableWorkflows(ctx?: ApiContext): Promise<AvailableWorkflowsResponse> {
+  return getWorkflowList(ctx);
 }
 
 // 獲取指定工作流的參數列表
-export async function getWorkflowParams(wfId: string): Promise<WorkflowParamsResponse> {
-  // 使用表單模式端點獲取參數信息，然後提取基礎參數
-  const formSchema = await getWorkflowFormSchema(wfId);
-
-  // 從 fields 中提取 node_id, title, class_type
-  const params: WorkflowParam[] = formSchema.fields.map((field: any) => ({
+export async function getWorkflowParams(wfId: string, ctx?: ApiContext): Promise<WorkflowParamsResponse> {
+  const formSchema = await getWorkflowFormSchema(wfId, ctx);
+  const params: WorkflowParam[] = (formSchema.fields || []).map((field: any) => ({
     node_id: field.node_id,
     title: field.title,
     class_type: field.class_type
   }));
-
   return params;
 }

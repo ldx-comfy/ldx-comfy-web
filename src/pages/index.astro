@@ -18,7 +18,7 @@ let error: string | null = null;
 console.log('Fetching available workflows...');
 
 try {
-  availableWorkflows = await getAvailableWorkflows();
+  availableWorkflows = await getAvailableWorkflows({ cookies: Astro.request.headers.get('cookie') || undefined });
   console.log('Available workflows:', availableWorkflows);
 } catch (err: unknown) {
   console.error('Error fetching workflows:', err);

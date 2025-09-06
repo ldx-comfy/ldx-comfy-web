@@ -1,0 +1,17 @@
+---
+export const prerender = false;
+
+import { clearAuthCookies } from '../lib/auth/store';
+
+const url = new URL(Astro.request.url);
+const nextParam = url.searchParams.get('next') || '/login';
+
+// Clear httpOnly cookies
+clearAuthCookies(Astro.cookies);
+// Clear JS-readable token if present
+Astro.cookies.delete('auth_token_js', { path: '/' });
+
+// Redirect to login with optional next
+const target = `/login?next=${encodeURIComponent(nextParam)}`;
+return Astro.redirect(target);
+---
