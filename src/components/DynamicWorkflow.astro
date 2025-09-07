@@ -217,6 +217,7 @@ const t = getTranslator(lang);
                       const fi = wrapEl.querySelector('input[type="file"]');
                       if (fi && fi.files && fi.files.length > 0) {
                         const file = fi.files[0];
+                        console.log(`Attaching file: name=${file.name}, size=${file.size}, type=${file.type}`);
                         fd.append('files', file, file.name);
                       }
                     }

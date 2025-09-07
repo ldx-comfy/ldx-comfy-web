@@ -217,6 +217,14 @@ const t = getTranslator(lang);
     console.log(`File selected: ${file.name}, size: ${file.size} bytes`);
 
     // 保留所选文件于 input.files，供提交时 FormData 附带
+    if (fileInput) {
+      // 创建一个新的 FileList 对象并设置 input 的 files 属性
+      // 注意：直接设置 fileInput.files 在某些浏览器中可能不被支持
+      // 我们可以使用 DataTransfer 对象来实现
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+    }
   }
 
   if (uploadBox && fileInput) {
