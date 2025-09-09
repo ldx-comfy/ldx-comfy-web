@@ -102,6 +102,32 @@
     "adminOnlyTitle": "管理员专属区域：",
     "adminOnlyContent": "你正在查看仅 admin 可见的内容。"
   },
+  "history": {
+    "title": "生成历史",
+    "executionId": "执行 ID",
+    "workflow": "工作流",
+    "time": "时间",
+    "imagesCount": "图片数量",
+    "noImage": "无图片",
+    "noHistory": "暂无生成历史",
+    "viewDetails": "查看详情",
+    "detail": {
+      "title": "历史记录详情",
+      "error": "错误",
+      "errorMessage": "获取历史记录详情时发生错误",
+      "information": "信息",
+      "executionId": "执行 ID",
+      "workflowId": "工作流 ID",
+      "timestamp": "时间戳",
+      "userId": "用户 ID",
+      "inputParameters": "输入参数",
+      "result": "结果",
+      "outputImage": "输出图片",
+      "backToHistory": "返回历史记录",
+      "loading": "正在加载历史记录详情..."
+    },
+    "noImages": "无图片"
+  },
   "common": {
     "loading": "加载中...",
     "error": "错误",

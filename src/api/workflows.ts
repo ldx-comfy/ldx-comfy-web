@@ -47,6 +47,8 @@ type WorkflowFormSchemaResponse = Record<string, any>;
 type ExecutionStatusResponse = WorkflowExecutionResponse;
 type HealthStatusResponse = HealthStatus;
 type ComfyUIStatusResponse = ComfyUIStatus;
+type UserWorkflowListResponse = string[];
+type UserGenerationHistoryResponse = Record<string, any>[];
 
 // Helpers
 function ensureOk(resp: Response): Response {
@@ -156,6 +158,21 @@ export async function getComfyUIHealth(ctx?: ApiContext): Promise<ComfyUIStatusR
 // 獲取可用工作流列表（别名）
 export async function getAvailableWorkflows(ctx?: ApiContext): Promise<AvailableWorkflowsResponse> {
   return getWorkflowList(ctx);
+}
+
+// 獲取當前用戶可用的工作流列表
+export async function getUserWorkflows(ctx?: ApiContext): Promise<UserWorkflowListResponse> {
+  return apiGet<UserWorkflowListResponse>('/forms/user/workflows', ctx);
+}
+
+// 獲取當前用戶的生成歷史記錄
+export async function getUserGenerationHistory(ctx?: ApiContext): Promise<UserGenerationHistoryResponse> {
+  return apiGet<UserGenerationHistoryResponse>('/forms/user/history', ctx);
+}
+
+// 獲取當前用戶特定執行ID的生成歷史記錄詳情
+export async function getUserGenerationHistoryDetail(executionId: string, ctx?: ApiContext): Promise<Record<string, any>> {
+  return apiGet<Record<string, any>>(`/forms/user/history/${executionId}`, ctx);
 }
 
 // 獲取指定工作流的參數列表

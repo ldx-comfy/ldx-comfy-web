@@ -13,6 +13,15 @@ export class AuthError extends Error {
   }
 }
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 export type ApiContext = {
   cookies?: string;              // cookies string from SSR request headers
   redirectOn401?: boolean;       // browser only: whether to auto redirect to login on 401
@@ -144,9 +153,7 @@ export async function apiFetch<T = any>(path: string, options: ApiFetchOptions =
       const text = await resp.text();
       if (text) msg += ` Body: ${text.slice(0, 1000)}`;
     } catch {}
-    const err = new Error(msg);
-    // @ts-ignore
-    err.status = resp.status;
+    const err = new ApiError(msg, resp.status);
     throw err;
   }
 

@@ -102,6 +102,32 @@
     "adminOnlyTitle": "管理者専用エリア:",
     "adminOnlyContent": "管理者のみが表示可能なコンテンツを表示しています。"
   },
+  "history": {
+    "title": "生成履歴",
+    "executionId": "実行ID",
+    "workflow": "ワークフロー",
+    "time": "時間",
+    "imagesCount": "画像数",
+    "noImage": "画像なし",
+    "noHistory": "生成履歴がありません",
+    "viewDetails": "詳細を見る",
+    "detail": {
+      "title": "履歴詳細",
+      "error": "エラー",
+      "errorMessage": "履歴詳細の取得中にエラーが発生しました",
+      "information": "情報",
+      "executionId": "実行ID",
+      "workflowId": "ワークフローID",
+      "timestamp": "タイムスタンプ",
+      "userId": "ユーザーID",
+      "inputParameters": "入力パラメータ",
+      "result": "結果",
+      "outputImage": "出力画像",
+      "backToHistory": "履歴に戻る",
+      "loading": "履歴詳細を読み込み中..."
+    },
+    "noImages": "画像がありません"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "エラー",

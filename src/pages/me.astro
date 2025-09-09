@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
 import { ensureMeSSR } from '../lib/auth/guard';
+import { getUserWorkflows, getUserGenerationHistory } from '../api/workflows';
 
 import CanCmp from '../components/Can.astro';
 
@@ -19,13 +20,278 @@ if (guard.response) {
   return guard.response;
 }
 const me = guard.me!;
+
+// Fetch user workflows and history
+const userWorkflows = await getUserWorkflows({ cookies: cookieHeader || undefined });
+const userHistory = await getUserGenerationHistory({ cookies: cookieHeader || undefined });
 ---
 
 <Layout title={t('me.title')}>
   <div class="me-page">
     <h1 class="title">{t('me.title')}</h1>
-    <div class="card">
-      <pre class="json">{JSON.stringify(me, null, 2)}</pre>
+    
+    <div class="section">
+      <h2>用戶信息</h2>
+      <div class="card">
+        <pre class="json">{JSON.stringify(me, null, 2)}</pre>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>可用的工作流</h2>
+      <div class="card">
+        <ul>
+          {userWorkflows.map((workflow) => (
+            <li><a href={`/wfs/${workflow}`}>{workflow}</a></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>{t('history.title')}</h2>
+      <div class="card history-container">
+        {userHistory.length > 0 ? (
+          <div class="history-grid">
+            {userHistory.map((record) => {
+              const images = (record.result && record.result.images) || [];
+              const firstImage = images.length > 0 ? images[0] : null;
+              // Handle both base64 data URLs and file paths
+              let imageUrl = null;
+              if (firstImage) {
+                if (firstImage.startsWith('data:')) {
+                  // Base64 data URL
+                  imageUrl = firstImage;
+                } else if (firstImage.startsWith('/comfy_out_image/')) {
+                  // File path with prefix
+                  imageUrl = firstImage;
+                } else {
+                  // File path without prefix
+                  imageUrl = `/comfy_out_image/${firstImage}`;
+                }
+              }
+              
+              // Format timestamp based on language
+              const formatDate = (timestamp: number) => {
+                const date = new Date(timestamp * 1000);
+                const now = new Date();
+                const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+                
+                // Define time units in seconds
+                const minute = 60;
+                const hour = minute * 60;
+                const day = hour * 24;
+                const week = day * 7;
+                const month = day * 30;
+                const year = day * 365;
+                
+                // Get language-specific translations
+                const translations = {
+                  'en': {
+                    'just now': 'just now',
+                    'seconds ago': 'seconds ago',
+                    'a minute ago': 'a minute ago',
+                    'minutes ago': 'minutes ago',
+                    'an hour ago': 'an hour ago',
+                    'hours ago': 'hours ago',
+                    'a day ago': 'a day ago',
+                    'days ago': 'days ago',
+                    'a week ago': 'a week ago',
+                    'weeks ago': 'weeks ago',
+                    'a month ago': 'a month ago',
+                    'months ago': 'months ago',
+                    'a year ago': 'a year ago',
+                    'years ago': 'years ago'
+                  },
+                  'cn': {
+                    'just now': '剛剛',
+                    'seconds ago': '秒前',
+                    'a minute ago': '1 分鐘前',
+                    'minutes ago': '分鐘前',
+                    'an hour ago': '1 小時前',
+                    'hours ago': '小時前',
+                    'a day ago': '1 天前',
+                    'days ago': '天前',
+                    'a week ago': '1 周前',
+                    'weeks ago': '周前',
+                    'a month ago': '1 個月前',
+                    'months ago': '個月前',
+                    'a year ago': '1 年前',
+                    'years ago': '年前'
+                  },
+                  'hk': {
+                    'just now': '剛剛',
+                    'seconds ago': '秒前',
+                    'a minute ago': '1 分鐘前',
+                    'minutes ago': '分鐘前',
+                    'an hour ago': '1 小時前',
+                    'hours ago': '小時前',
+                    'a day ago': '1 天前',
+                    'days ago': '天前',
+                    'a week ago': '1 週前',
+                    'weeks ago': '週前',
+                    'a month ago': '1 個月前',
+                    'months ago': '個月前',
+                    'a year ago': '1 年前',
+                    'years ago': '年前'
+                  },
+                  'fr': {
+                    'just now': 'à l\'instant',
+                    'seconds ago': 'secondes ago',
+                    'a minute ago': 'une minute ago',
+                    'minutes ago': 'minutes ago',
+                    'an hour ago': 'une heure ago',
+                    'hours ago': 'heures ago',
+                    'a day ago': 'un jour ago',
+                    'days ago': 'jours ago',
+                    'a week ago': 'une semaine ago',
+                    'weeks ago': 'semaines ago',
+                    'a month ago': 'un mois ago',
+                    'months ago': 'mois ago',
+                    'a year ago': 'un an ago',
+                    'years ago': 'ans ago'
+                  },
+                  'jp': {
+                    'just now': 'たった今',
+                    'seconds ago': '秒前',
+                    'a minute ago': '1 分前',
+                    'minutes ago': '分前',
+                    'an hour ago': '1 時間前',
+                    'hours ago': '時間前',
+                    'a day ago': '1 日前',
+                    'days ago': '日前',
+                    'a week ago': '1 週間前',
+                    'weeks ago': '週間前',
+                    'a month ago': '1 ヶ月前',
+                    'months ago': 'ヶ月前',
+                    'a year ago': '1 年前',
+                    'years ago': '年前'
+                  }
+                };
+                
+                // Get translations for current language, fallback to English
+                const t = translations[lang as keyof typeof translations] || translations['en'];
+                
+                if (diffInSeconds < 5) {
+                  return t['just now'];
+                } else if (diffInSeconds < minute) {
+                  return `${diffInSeconds} ${t['seconds ago']}`;
+                } else if (diffInSeconds < 2 * minute) {
+                  return t['a minute ago'];
+                } else if (diffInSeconds < hour) {
+                  return `${Math.floor(diffInSeconds / minute)} ${t['minutes ago']}`;
+                } else if (diffInSeconds < 2 * hour) {
+                  return t['an hour ago'];
+                } else if (diffInSeconds < day) {
+                  return `${Math.floor(diffInSeconds / hour)} ${t['hours ago']}`;
+                } else if (diffInSeconds < 2 * day) {
+                  return t['a day ago'];
+                } else if (diffInSeconds < week) {
+                  return `${Math.floor(diffInSeconds / day)} ${t['days ago']}`;
+                } else if (diffInSeconds < 2 * week) {
+                  return t['a week ago'];
+                } else if (diffInSeconds < month) {
+                  return `${Math.floor(diffInSeconds / week)} ${t['weeks ago']}`;
+                } else if (diffInSeconds < 2 * month) {
+                  return t['a month ago'];
+                } else if (diffInSeconds < year) {
+                  return `${Math.floor(diffInSeconds / month)} ${t['months ago']}`;
+                } else if (diffInSeconds < 2 * year) {
+                  return t['a year ago'];
+                } else {
+                  return `${Math.floor(diffInSeconds / year)} ${t['years ago']}`;
+                }
+              };
+              
+              return (
+                <div class="history-item">
+                  <div class="history-header">
+                    <span class="execution-id">{t('history.executionId')}: {record.execution_id}</span>
+                    <span class="workflow-id">{t('history.workflow')}: {record.workflow_id}</span>
+                  </div>
+                  <div class="history-content">
+                    {imageUrl ? (
+                      <div class="image-container">
+                        <img
+                          src={imageUrl}
+                          alt={t('dynamicworkflow.result')}
+                          class="history-image"
+                          data-preview-src={imageUrl}
+                          data-execution-id={record.execution_id}
+                        />
+                      </div>
+                    ) : (
+                      <div class="no-image">{t('history.noImage')}</div>
+                    )}
+                    <div class="history-details">
+                      <div class="timestamp">{t('history.time')}: {
+                        (() => {
+                          const date = new Date(record.timestamp * 1000);
+                          // Define language-specific date and time formats
+                          if (lang === 'en') {
+                            return date.toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric'
+                            }) + ' ' + date.toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              hour12: false
+                            });
+                          } else if (lang === 'cn' || lang === 'hk') {
+                            return date.toLocaleDateString('zh-CN', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            }) + ' ' + date.toLocaleTimeString('zh-CN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              hour12: false
+                            });
+                          } else if (lang === 'fr') {
+                            return date.toLocaleDateString('fr-FR', {
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric'
+                            }) + ' ' + date.toLocaleTimeString('fr-FR', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              hour12: false
+                            });
+                          } else if (lang === 'jp') {
+                            return date.toLocaleDateString('ja-JP', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            }) + ' ' + date.toLocaleTimeString('ja-JP', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              hour12: false
+                            });
+                          } else {
+                            // Fallback to default locale
+                            return date.toLocaleString(lang);
+                          }
+                        })()
+                      }</div>
+                      <div class="images-count">{t('history.imagesCount')}: {images.length}</div>
+                    </div>
+                    <div class="history-actions">
+                      <a href={`/history/${record.execution_id}`} class="btn secondary">{t('history.viewDetails')}</a>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p>{t('history.noHistory')}</p>
+        )}
+      </div>
     </div>
 
     <div class="actions">
@@ -43,6 +309,52 @@ const me = guard.me!;
       </CanCmp>
     </div>
   </div>
+  
+  {/* Preview Modal */}
+  <div id="preview-modal" class="preview-modal" style="display:none;">
+    <span class="close" onclick="document.getElementById('preview-modal').style.display='none'">&times;</span>
+    <img class="preview-modal-content" id="preview-image" />
+  </div>
+  
+  <script>
+    {/* Client-side script to handle image preview */}
+    {/* This script runs after the page is hydrated */}
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add click event listeners to all history images
+      const images = document.querySelectorAll('.history-image');
+      images.forEach(img => {
+        img.addEventListener('click', (e) => {
+          const target = e.target as HTMLImageElement;
+          const src = target.getAttribute('data-preview-src');
+          const executionId = target.getAttribute('data-execution-id');
+          
+          if (src) {
+            // Set the source of the preview image
+            const previewImage = document.getElementById('preview-image') as HTMLImageElement;
+            if (previewImage) {
+              previewImage.src = src;
+            }
+            
+            // Show the preview modal
+            const modal = document.getElementById('preview-modal');
+            if (modal) {
+              modal.style.display = 'block';
+            }
+          }
+        });
+      });
+      
+      // Add click event listener to close the modal when clicking on the close button or outside the image
+      const modal = document.getElementById('preview-modal');
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal || (e.target as HTMLElement).classList.contains('close')) {
+            modal.style.display = 'none';
+          }
+        });
+      }
+    });
+  </script>
 </Layout>
 
 <style>
@@ -54,6 +366,14 @@ const me = guard.me!;
   .title {
     margin: 0 0 8px 0;
     font-size: 24px;
+    color: var(--text-primary);
+  }
+  .section {
+    margin-bottom: 20px;
+  }
+  .section h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
     color: var(--text-primary);
   }
   .card {
@@ -95,5 +415,132 @@ const me = guard.me!;
     background: rgba(59,130,246,0.1);
     border: 1px solid var(--accent-color);
     border-radius: 8px;
+  }
+  
+  /* History styles */
+  .history-container {
+    padding: 0;
+  }
+  
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 16px;
+  }
+  
+  .history-item {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .history-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .history-header {
+    padding: 12px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .execution-id, .workflow-id {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .history-content {
+    padding: 12px;
+  }
+  
+  .image-container {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg-primary);
+    margin-bottom: 12px;
+  }
+  
+  .history-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  
+  .no-image {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  
+  .history-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  
+  .timestamp, .images-count {
+    margin-bottom: 4px;
+  }
+  
+  /* Preview Modal Styles */
+  .preview-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  .preview-modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    max-height: 80%;
+    object-fit: contain;
+    animation-name: zoom;
+    animation-duration: 0.3s;
+  }
+  
+  @keyframes zoom {
+    from {transform: scale(0)}
+    to {transform: scale(1)}
+  }
+  
+  .close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: #bbb;
   }
 </style>

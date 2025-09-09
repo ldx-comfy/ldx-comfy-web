@@ -102,6 +102,32 @@
     "adminOnlyTitle": "Zone réservée aux administrateurs :",
     "adminOnlyContent": "Vous consultez du contenu visible uniquement par les administrateurs."
   },
+  "history": {
+    "title": "Historique de Génération",
+    "executionId": "ID d'Exécution",
+    "workflow": "Flux de Travail",
+    "time": "Heure",
+    "imagesCount": "Nombre d'Images",
+    "noImage": "Pas d'Image",
+    "noHistory": "Aucun historique de génération",
+    "viewDetails": "Voir les détails",
+    "detail": {
+      "title": "Détail de l'historique",
+      "error": "Erreur",
+      "errorMessage": "Une erreur s'est produite lors de la récupération des détails de l'historique",
+      "information": "Information",
+      "executionId": "ID d'Exécution",
+      "workflowId": "ID du Flux de Travail",
+      "timestamp": "Horodatage",
+      "userId": "ID Utilisateur",
+      "inputParameters": "Paramètres d'entrée",
+      "result": "Résultat",
+      "outputImage": "Image de sortie",
+      "backToHistory": "Retour à l'historique",
+      "loading": "Chargement des détails de l'historique..."
+    },
+    "noImages": "Aucune image"
+  },
   "common": {
     "loading": "Chargement...",
     "error": "Erreur",

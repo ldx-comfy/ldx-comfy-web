@@ -102,6 +102,32 @@
     "adminOnlyTitle": "Admin-only area:",
     "adminOnlyContent": "You are viewing content visible only to admins."
   },
+  "history": {
+    "title": "Generation History",
+    "executionId": "Execution ID",
+    "workflow": "Workflow",
+    "time": "Time",
+    "imagesCount": "Images Count",
+    "noImage": "No Image",
+    "noHistory": "No generation history",
+    "viewDetails": "View Details",
+    "detail": {
+      "title": "History Detail",
+      "error": "Error",
+      "errorMessage": "An error occurred while fetching history details",
+      "information": "Information",
+      "executionId": "Execution ID",
+      "workflowId": "Workflow ID",
+      "timestamp": "Timestamp",
+      "userId": "User ID",
+      "inputParameters": "Input Parameters",
+      "result": "Result",
+      "outputImage": "Output Image",
+      "backToHistory": "Back to History",
+      "loading": "Loading history details..."
+    },
+    "noImages": "No Images"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

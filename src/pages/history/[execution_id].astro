@@ -1,0 +1,316 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import { getTranslator } from '@gudupao/astro-i18n';
+import { ensureMeSSR } from '../../lib/auth/guard';
+import { getUserGenerationHistoryDetail } from '../../api/workflows';
+
+import CanCmp from '../../components/Can.astro';
+
+// i18n
+const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
+const t = getTranslator(lang);
+
+// Guard: require logged-in and fetch claims
+const cookieHeader = Astro.request.headers.get('cookie');
+const guard = await ensureMeSSR(Astro.request.url, cookieHeader);
+if (guard.response) {
+  // Not logged in or token invalid -> redirect to login
+  return guard.response;
+}
+const me = guard.me!;
+
+// Get execution ID from URL parameters
+const { execution_id } = Astro.params;
+
+// Fetch user generation history detail
+let historyDetail: Record<string, any> | null = null;
+let error: { message?: string } | null = null;
+try {
+  historyDetail = await getUserGenerationHistoryDetail(execution_id as string);
+} catch (err: any) {
+  console.error('Failed to fetch history detail:', err);
+  error = { message: err.message || 'Unknown error' };
+}
+---
+
+<Layout title={t('history.detail.title')}>
+  <div class="history-detail-page">
+    <h1 class="title">{t('history.detail.title')}</h1>
+    
+    {error ? (
+      <div class="error-section">
+        <h2>{t('history.detail.error')}</h2>
+        <p>{error.message || t('history.detail.errorMessage')}</p>
+        <a class="btn" href="/me">{t('history.detail.backToHistory')}</a>
+      </div>
+    ) : historyDetail ? (
+      <div class="detail-section">
+        <div class="card">
+          <h2>{t('history.detail.information')}</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <strong>{t('history.detail.executionId')}:</strong>
+              <span>{historyDetail.execution_id}</span>
+            </div>
+            <div class="info-item">
+              <strong>{t('history.detail.workflowId')}:</strong>
+              <span>{historyDetail.workflow_id}</span>
+            </div>
+            <div class="info-item">
+              <strong>{t('history.detail.timestamp')}:</strong>
+              <span>{new Date(historyDetail.timestamp * 1000).toLocaleString(lang)}</span>
+            </div>
+            <div class="info-item">
+              <strong>{t('history.detail.userId')}:</strong>
+              <span>{historyDetail.user_id}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2>{t('history.detail.inputParameters')}</h2>
+          <pre class="json">{JSON.stringify(historyDetail.input_params, null, 2)}</pre>
+        </div>
+        
+        <div class="card">
+          <h2>{t('history.detail.result')}</h2>
+          {historyDetail.result && historyDetail.result.images && historyDetail.result.images.length > 0 ? (
+            <div class="images-grid">
+              {historyDetail.result.images.map((image: string, index: number) => {
+                // Handle both base64 data URLs and file paths
+                let imageUrl = null;
+                if (image) {
+                  if (image.startsWith('data:')) {
+                    // Base64 data URL
+                    imageUrl = image;
+                  } else if (image.startsWith('/comfy_out_image/')) {
+                    // File path with prefix
+                    imageUrl = image;
+                  } else {
+                    // File path without prefix
+                    imageUrl = `/comfy_out_image/${image}`;
+                  }
+                }
+                
+                return (
+                  <div class="image-container">
+                    {imageUrl ? (
+                      <img 
+                        src={imageUrl} 
+                        alt={`${t('history.detail.outputImage')} ${index + 1}`} 
+                        class="detail-image" 
+                      />
+                    ) : (
+                      <div class="no-image">{t('history.noImage')}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p>{t('history.noImages')}</p>
+          )}
+        </div>
+        
+        <div class="actions">
+          <a class="btn" href="/me">{t('history.detail.backToHistory')}</a>
+        </div>
+      </div>
+    ) : (
+      <div class="loading-section">
+        <p>{t('history.detail.loading')}</p>
+      </div>
+    )}
+  </div>
+</Layout>
+
+{/* Preview Modal */}
+<div id="preview-modal" class="preview-modal" style="display:none;">
+  <span class="close">&times;</span>
+  <img class="preview-modal-content" id="preview-image" />
+</div>
+
+<script>
+  {/* Client-side script to handle image preview */}
+  {/* This script runs after the page is hydrated */}
+  document.addEventListener('DOMContentLoaded', () => {
+    // Add click event listeners to all detail images
+    const images = document.querySelectorAll('.detail-image');
+    images.forEach(img => {
+      img.addEventListener('click', (e) => {
+        const target = e.target as HTMLImageElement;
+        const src = target.src;
+        
+        if (src) {
+          // Set the source of the preview image
+          const previewImage = document.getElementById('preview-image') as HTMLImageElement;
+          if (previewImage) {
+            previewImage.src = src;
+          }
+          
+          // Show the preview modal
+          const modal = document.getElementById('preview-modal');
+          if (modal) {
+            modal.style.display = 'block';
+          }
+        }
+      });
+    });
+    
+    // Add click event listener to close the modal when clicking on the close button or outside the image
+    const modal = document.getElementById('preview-modal');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal || (e.target as HTMLElement).classList.contains('close')) {
+          modal.style.display = 'none';
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .history-detail-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .title {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: var(--text-primary);
+  }
+  .card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+  }
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .info-item strong {
+    color: var(--text-primary);
+  }
+  .info-item span {
+    color: var(--text-secondary);
+  }
+  .json {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    background: var(--bg-primary);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  .images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+  }
+  .image-container {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg-primary);
+  }
+  .detail-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .no-image {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+  .btn {
+    display: inline-block;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    background: var(--accent-color);
+    color: #fff;
+    border: 1px solid var(--accent-color);
+  }
+  .btn.secondary {
+    background: transparent;
+    color: var(--accent-color);
+  }
+  .loading-section, .error-section {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .error-section p {
+    color: var(--error-color);
+    margin-bottom: 20px;
+  }
+  
+  /* Preview Modal Styles */
+  .preview-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  .preview-modal-content {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    max-height: 80%;
+    object-fit: contain;
+    animation-name: zoom;
+    animation-duration: 0.3s;
+  }
+  
+  @keyframes zoom {
+    from {transform: scale(0)}
+    to {transform: scale(1)}
+  }
+  
+  .close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .close:hover,
+  .close:focus {
+    color: #bbb;
+  }
+</style>

@@ -102,6 +102,32 @@
     "adminOnlyTitle": "管理員專屬區域：",
     "adminOnlyContent": "您正在查看僅管理員可見的內容。"
   },
+  "history": {
+    "title": "生成歷史",
+    "executionId": "執行 ID",
+    "workflow": "工作流程",
+    "time": "時間",
+    "imagesCount": "圖片數量",
+    "noImage": "無圖片",
+    "noHistory": "暫無生成歷史",
+    "viewDetails": "查看詳情",
+    "detail": {
+      "title": "歷史記錄詳情",
+      "error": "錯誤",
+      "errorMessage": "獲取歷史記錄詳情時發生錯誤",
+      "information": "資訊",
+      "executionId": "執行 ID",
+      "workflowId": "工作流程 ID",
+      "timestamp": "時間戳",
+      "userId": "用戶 ID",
+      "inputParameters": "輸入參數",
+      "result": "結果",
+      "outputImage": "輸出圖片",
+      "backToHistory": "返回歷史記錄",
+      "loading": "正在載入歷史記錄詳情..."
+    },
+    "noImages": "無圖片"
+  },
   "common": {
     "loading": "載入中...",
     "error": "錯誤",
