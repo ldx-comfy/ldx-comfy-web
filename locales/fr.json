@@ -75,7 +75,15 @@
     "adminOnlySection": "Administrateurs uniquement :",
     "rbacControlledContent": "Vous consultez du contenu contrôlé par RBAC.",
     "backToHome": "Retour à l'Accueil",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "allUsersGenerationHistory": "Historique de génération de tous les utilisateurs",
+    "executionId": "ID d'exécution",
+    "workflow": "Flux de travail",
+    "userId": "ID utilisateur",
+    "noImage": "Pas d'image",
+    "time": "Heure",
+    "imagesCount": "Nombre d'images",
+    "noHistory": "Aucun historique"
   },
   "login": {
     "title": "Connexion",
@@ -124,7 +132,14 @@
       "result": "Résultat",
       "outputImage": "Image de sortie",
       "backToHistory": "Retour à l'historique",
-      "loading": "Chargement des détails de l'historique..."
+      "loading": "Chargement des détails de l'historique...",
+      "key": "Clé",
+      "value": "Valeur",
+      "noInputParameters": "Aucun paramètre d'entrée",
+      "steps": "Étapes",
+      "cfgScale": "Échelle CFG",
+      "prompt": "Prompt",
+      "parameters": "Paramètres"
     },
     "noImages": "Aucune image"
   },

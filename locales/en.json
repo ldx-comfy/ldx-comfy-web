@@ -75,7 +75,15 @@
     "adminOnlySection": "Admin only:",
     "rbacControlledContent": "You are viewing content controlled by RBAC.",
     "backToHome": "Back to Home",
-    "logout": "Logout"
+    "logout": "Logout",
+    "allUsersGenerationHistory": "All Users' Generation History",
+    "executionId": "Execution ID",
+    "workflow": "Workflow",
+    "userId": "User ID",
+    "noImage": "No Image",
+    "time": "Time",
+    "imagesCount": "Images Count",
+    "noHistory": "No History"
   },
   "login": {
     "title": "Sign In",
@@ -124,7 +132,14 @@
       "result": "Result",
       "outputImage": "Output Image",
       "backToHistory": "Back to History",
-      "loading": "Loading history details..."
+      "loading": "Loading history details...",
+      "key": "Key",
+      "value": "Value",
+      "noInputParameters": "No input parameters",
+      "steps": "Steps",
+      "cfgScale": "CFG Scale",
+      "prompt": "Prompt",
+      "parameters": "Parameters"
     },
     "noImages": "No Images"
   },

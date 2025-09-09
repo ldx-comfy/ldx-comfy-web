@@ -75,7 +75,15 @@
     "adminOnlySection": "僅限管理員：",
     "rbacControlledContent": "您正在查看受 RBAC 控制的內容。",
     "backToHome": "返回首頁",
-    "logout": "登出"
+    "logout": "登出",
+    "allUsersGenerationHistory": "所有用戶的生成歷史記錄",
+    "executionId": "執行 ID",
+    "workflow": "工作流程",
+    "userId": "用戶 ID",
+    "noImage": "無圖片",
+    "time": "時間",
+    "imagesCount": "圖片數量",
+    "noHistory": "暫無歷史記錄"
   },
   "login": {
     "title": "登入",
@@ -124,7 +132,14 @@
       "result": "結果",
       "outputImage": "輸出圖片",
       "backToHistory": "返回歷史記錄",
-      "loading": "正在載入歷史記錄詳情..."
+      "loading": "正在載入歷史記錄詳情...",
+      "key": "鍵",
+      "value": "值",
+      "noInputParameters": "無輸入參數",
+      "steps": "步數",
+      "cfgScale": "CFG比例",
+      "prompt": "提示詞",
+      "parameters": "參數"
     },
     "noImages": "無圖片"
   },

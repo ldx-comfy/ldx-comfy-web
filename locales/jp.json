@@ -75,7 +75,15 @@
     "adminOnlySection": "管理者のみ:",
     "rbacControlledContent": "RBACで制御されたコンテンツを表示しています。",
     "backToHome": "ホームに戻る",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "allUsersGenerationHistory": "すべてのユーザーの生成履歴",
+    "executionId": "実行ID",
+    "workflow": "ワークフロー",
+    "userId": "ユーザーID",
+    "noImage": "画像なし",
+    "time": "時間",
+    "imagesCount": "画像数",
+    "noHistory": "履歴なし"
   },
   "login": {
     "title": "サインイン",
@@ -124,7 +132,14 @@
       "result": "結果",
       "outputImage": "出力画像",
       "backToHistory": "履歴に戻る",
-      "loading": "履歴詳細を読み込み中..."
+      "loading": "履歴詳細を読み込み中...",
+      "key": "キー",
+      "value": "値",
+      "noInputParameters": "入力パラメータなし",
+      "steps": "ステップ数",
+      "cfgScale": "CFGスケール",
+      "prompt": "プロンプト",
+      "parameters": "パラメータ"
     },
     "noImages": "画像がありません"
   },

@@ -5,6 +5,8 @@ import Layout from '../layouts/Layout.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
 import { requireRolesSSR } from '../lib/auth/guard';
 import { pingAdmin } from '../lib/auth/service';
+import { getAllUsersGenerationHistory } from '../api/workflows';
+import { toBackendAbsoluteUrl } from '../lib/api/client';
 import CanCmp from '../components/Can.astro';
 
 // i18n
@@ -27,6 +29,15 @@ try {
   pingResult = await pingAdmin({ cookies: cookieHeader || undefined });
 } catch (e: any) {
   pingError = e?.message || 'Failed to call admin ping';
+}
+
+// Fetch all users' generation history
+let allUsersHistory: Record<string, any>[] = [];
+let historyError: string | null = null;
+try {
+  allUsersHistory = await getAllUsersGenerationHistory({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+  historyError = e?.message || 'Failed to fetch all users history';
 }
 ---
 
@@ -62,6 +73,70 @@ try {
       <a class="btn secondary" href="/">{t('admin.backToHome')}</a>
       <a class="btn" href="/logout?next=/admin">{t('admin.logout')}</a>
     </div>
+    
+    <div class="section">
+      <h2>{t('admin.allUsersGenerationHistory')}</h2>
+      {historyError ? (
+        <div class="error">{historyError}</div>
+      ) : (
+        <div class="card history-container">
+          {allUsersHistory.length > 0 ? (
+            <div class="history-grid">
+              {allUsersHistory.map((record) => {
+                const images = (record.result && record.result.images) || [];
+                const firstImage = images.length > 0 ? images[0] : null;
+                // Handle both base64 data URLs and file paths
+                let imageUrl = null;
+                if (firstImage) {
+                  if (firstImage.startsWith('data:')) {
+                    // Base64 data URL
+                    imageUrl = firstImage;
+                  } else if (firstImage.startsWith('/comfy_out_image/')) {
+                    // File path with prefix
+                    imageUrl = toBackendAbsoluteUrl(firstImage);
+                  } else {
+                    // File path without prefix
+                    imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${firstImage}`);
+                  }
+                }
+                
+                return (
+                  <div class="history-item">
+                    <div class="history-header">
+                      <span class="execution-id">{t('admin.executionId')}: {record.execution_id}</span>
+                      <span class="workflow-id">{t('admin.workflow')}: {record.workflow_id}</span>
+                      <span class="user-id">{t('admin.userId')}: {record.user_id}</span>
+                    </div>
+                    <div class="history-content">
+                      {imageUrl ? (
+                        <div class="image-container">
+                          <img
+                            src={imageUrl}
+                            alt="生成結果"
+                            class="history-image"
+                          />
+                        </div>
+                      ) : (
+                        <div class="no-image">{t('admin.noImage')}</div>
+                      )}
+                      <div class="history-details">
+                        <div class="timestamp">{t('admin.time')}: {new Date(record.timestamp * 1000).toLocaleString(lang)}</div>
+                        <div class="images-count">{t('admin.imagesCount')}: {images.length}</div>
+                      </div>
+                      <div class="history-actions">
+                        <a href={`/admin/history/${record.execution_id}`} class="btn secondary">{t('history.viewDetails')}</a>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p>{t('admin.noHistory')}</p>
+          )}
+        </div>
+      )}
+    </div>
   </div>
 </Layout>
 
@@ -82,4 +157,87 @@ try {
   .actions { display: flex; gap: 10px; }
   .btn { display: inline-block; padding: 10px 12px; border-radius: 8px; text-decoration: none; background: var(--accent-color); color: #fff; border: 1px solid var(--accent-color); }
   .btn.secondary { background: transparent; color: var(--accent-color); }
+  
+  /* History styles */
+  .history-container {
+    padding: 0;
+  }
+  
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 16px;
+  }
+  
+  .history-item {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .history-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  }
+  
+  .history-header {
+    padding: 12px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .execution-id, .workflow-id, .user-id {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .history-content {
+    padding: 12px;
+  }
+  
+  .image-container {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--bg-primary);
+    margin-bottom: 12px;
+  }
+  
+  .history-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  
+  .no-image {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  
+  .history-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  
+  .timestamp, .images-count {
+    margin-bottom: 4px;
+  }
 </style>

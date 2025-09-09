@@ -49,6 +49,7 @@ type HealthStatusResponse = HealthStatus;
 type ComfyUIStatusResponse = ComfyUIStatus;
 type UserWorkflowListResponse = string[];
 type UserGenerationHistoryResponse = Record<string, any>[];
+type AllUsersGenerationHistoryResponse = Record<string, any>[];
 
 // Helpers
 function ensureOk(resp: Response): Response {
@@ -184,4 +185,14 @@ export async function getWorkflowParams(wfId: string, ctx?: ApiContext): Promise
     class_type: field.class_type
   }));
   return params;
+}
+
+// 獲取所有用戶的生成歷史記錄（僅限管理員）
+export async function getAllUsersGenerationHistory(ctx?: ApiContext): Promise<AllUsersGenerationHistoryResponse> {
+  return apiGet<AllUsersGenerationHistoryResponse>('/forms/admin/history', ctx);
+}
+
+// 獲取任意用戶特定執行ID的生成歷史記錄詳情（僅限管理員）
+export async function getAnyUserGenerationHistoryDetail(executionId: string, ctx?: ApiContext): Promise<Record<string, any>> {
+  return apiGet<Record<string, any>>(`/forms/admin/history/${executionId}`, ctx);
 }

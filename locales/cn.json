@@ -75,7 +75,15 @@
     "adminOnlySection": "仅 admin 可见：",
     "rbacControlledContent": "你正在查看受 RBAC 控制的区块。",
     "backToHome": "返回首页",
-    "logout": "退出登录"
+    "logout": "退出登录",
+    "allUsersGenerationHistory": "所有用户的生成历史记录",
+    "executionId": "执行ID",
+    "workflow": "工作流",
+    "userId": "用户ID",
+    "noImage": "无图片",
+    "time": "时间",
+    "imagesCount": "图片数量",
+    "noHistory": "暂无历史记录"
   },
   "login": {
     "title": "登录",
@@ -124,7 +132,14 @@
       "result": "结果",
       "outputImage": "输出图片",
       "backToHistory": "返回历史记录",
-      "loading": "正在加载历史记录详情..."
+      "loading": "正在加载历史记录详情...",
+      "key": "键",
+      "value": "值",
+      "noInputParameters": "无输入参数",
+      "steps": "步数",
+      "cfgScale": "CFG比例",
+      "prompt": "提示词",
+      "parameters": "参数"
     },
     "noImages": "无图片"
   },
