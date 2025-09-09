@@ -5,6 +5,7 @@ import ImageEditor from './ImageEditor.astro';
 import PromptInput from './PromptInput.astro';
 import ToggleWithText from './ToggleWithText.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
+import { API_URL_TWO } from '../config/env.ts';
 
 interface WorkflowParam {
  node_id: string;
@@ -17,13 +18,17 @@ interface Props {
   workflowId: string;
   executionResult?: any;
   executionError?: string | null;
+  apiUrlTwo: string;
 }
 
-const { params = [], workflowId, executionResult, executionError } = Astro.props;
+const { params = [], workflowId, executionResult, executionError, apiUrlTwo } = Astro.props;
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
 const t = getTranslator(lang);
+
+// Get API_URL_TWO from env
+const apiUrlTwoValue = API_URL_TWO;
 ---
 
 <!-- Image Editor Modal -->
@@ -58,7 +63,7 @@ const t = getTranslator(lang);
   }
   
   <div class="workflow-controls">
-    <form method="post" action="" id="workflow-form">
+    <form method="post" action="" id="workflow-form" data-api-url={apiUrlTwoValue}>
       <input type="hidden" name="workflowId" value={workflowId} />
       <input type="hidden" name="params" value={JSON.stringify(params)} />
       <button
@@ -73,6 +78,9 @@ const t = getTranslator(lang);
           try {
             const form = document.getElementById('workflow-form');
             if (!form) return;
+            
+            // Get API URL from data attribute
+            const apiUrlTwo = form.getAttribute('data-api-url');
 
             async function serializeParamsToHiddenInput() {
               try {
@@ -151,7 +159,7 @@ const t = getTranslator(lang);
                 const html = images.map((img) => {
                   const url = String(img).startsWith('http')
                     ? img
-                    : `http://127.0.0.1:1145/${String(img).replace(/^\/+/, '')}`;
+                    : `${apiUrlTwo}/${String(img).replace(/^\/+/, '')}`;
                   return `
                     <a href="${url}" target="_blank" rel="noopener noreferrer">
                       <img src="${url}" alt="Result image"
@@ -226,7 +234,7 @@ const t = getTranslator(lang);
                   console.warn('[DynamicWorkflow] attach files failed:', e);
                 }
 
-                reqUrl = `http://127.0.0.1:1145/api/v1/forms/workflows/${encodeURIComponent(workflowId)}/execute`;
+                reqUrl = `${apiUrlTwo}/api/v1/forms/workflows/${encodeURIComponent(workflowId)}/execute`;
                 const resp = await fetch(reqUrl, {
                   method: 'POST',
                   body: fd
