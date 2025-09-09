@@ -5,6 +5,7 @@ import Layout from '../../layouts/Layout.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
 import { ensureMeSSR } from '../../lib/auth/guard';
 import { getUserGenerationHistoryDetail } from '../../api/workflows';
+import { toBackendAbsoluteUrl } from '../../lib/api/client';
 
 import CanCmp from '../../components/Can.astro';
 
@@ -28,7 +29,7 @@ const { execution_id } = Astro.params;
 let historyDetail: Record<string, any> | null = null;
 let error: { message?: string } | null = null;
 try {
-  historyDetail = await getUserGenerationHistoryDetail(execution_id as string);
+  historyDetail = await getUserGenerationHistoryDetail(execution_id as string, { cookies: cookieHeader || undefined });
 } catch (err: any) {
   console.error('Failed to fetch history detail:', err);
   error = { message: err.message || 'Unknown error' };
@@ -71,7 +72,34 @@ try {
         
         <div class="card">
           <h2>{t('history.detail.inputParameters')}</h2>
-          <pre class="json">{JSON.stringify(historyDetail.input_params, null, 2)}</pre>
+          {historyDetail.input_params ? (
+            <div class="input-params-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    Object.entries(historyDetail.input_params).map(([key, value]) => {
+                      return <tr>
+                        <td>{key}</td>
+                        <td>
+                          {typeof value === 'object' ?
+                          <pre class="json">{JSON.stringify(value, null, 2)}</pre> :
+                          String(value)}
+                        </td>
+                      </tr>;
+                    })
+                  }
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>No input parameters</p>
+          )}
         </div>
         
         <div class="card">
@@ -87,24 +115,70 @@ try {
                     imageUrl = image;
                   } else if (image.startsWith('/comfy_out_image/')) {
                     // File path with prefix
-                    imageUrl = image;
+                    imageUrl = toBackendAbsoluteUrl(image);
                   } else {
                     // File path without prefix
-                    imageUrl = `/comfy_out_image/${image}`;
+                    imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${image}`);
+                  }
+                }
+                
+                // Extract prompt from input_params
+                let prompt = '';
+                // Extract other parameters like steps, cfg_scale, etc.
+                let steps = '';
+                let cfgScale = '';
+                
+                if (historyDetail.input_params && historyDetail.input_params.nodes) {
+                  const nodes = historyDetail.input_params.nodes;
+                  // Find the node with text input
+                  const textNode = nodes.find((node: any) => node.class_type === 'Text' || (node.class_type && node.class_type.includes('CLIPTextEncode')));
+                  if (textNode && textNode.value && textNode.value.text) {
+                    prompt = textNode.value.text;
+                  }
+                  
+                  // Find other parameters
+                  // This is a simplified example. You might need to adjust this based on the actual structure of your data.
+                  const stepsNode = nodes.find((node: any) => node.title === 'Steps');
+                  if (stepsNode && stepsNode.value) {
+                    steps = stepsNode.value;
+                  }
+                  
+                  const cfgScaleNode = nodes.find((node: any) => node.title === 'CFG Scale');
+                  if (cfgScaleNode && cfgScaleNode.value) {
+                    cfgScale = cfgScaleNode.value;
                   }
                 }
                 
                 return (
-                  <div class="image-container">
-                    {imageUrl ? (
-                      <img 
-                        src={imageUrl} 
-                        alt={`${t('history.detail.outputImage')} ${index + 1}`} 
-                        class="detail-image" 
-                      />
-                    ) : (
-                      <div class="no-image">{t('history.noImage')}</div>
-                    )}
+                  <div class="image-result-container">
+                    <div class="image-container">
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={`${t('history.detail.outputImage')} ${index + 1}`}
+                          class="detail-image"
+                        />
+                      ) : (
+                        <div class="no-image">{t('history.noImage')}</div>
+                      )}
+                    </div>
+                    <div class="details-container">
+                      {prompt && (
+                        <div class="detail-item">
+                          <strong>{t('history.detail.prompt')}:</strong>
+                          <div class="prompt-box">{prompt}</div>
+                        </div>
+                      )}
+                      {(steps || cfgScale) && (
+                        <div class="detail-item">
+                          <strong>{t('history.detail.parameters')}:</strong>
+                          <div class="parameters-box">
+                            {steps && <div>{t('history.detail.steps')}: {steps}</div>}
+                            {cfgScale && <div>{t('history.detail.cfgScale')}: {cfgScale}</div>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -215,25 +289,85 @@ try {
     border-radius: 8px;
     overflow-x: auto;
   }
+  .input-params-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .input-params-table th,
+  .input-params-table td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .input-params-table th {
+    background-color: var(--bg-primary);
+    font-weight: bold;
+  }
   .images-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+  }
+  .image-result-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
   }
   .image-container {
     width: 100%;
-    height: 200px;
+    height: 300px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
     border-radius: 8px;
     background: var(--bg-primary);
+    border: 1px solid var(--border-color);
   }
   .detail-image {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+  }
+  .details-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .detail-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  .prompt-box {
+    padding: 12px;
+    background-color: var(--bg-primary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .parameters-box {
+    padding: 12px;
+    background-color: var(--bg-primary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+  }
+  .parameters-box > div {
+    margin-bottom: 5px;
+  }
+  .parameters-box > div:last-child {
+    margin-bottom: 0;
   }
   .no-image {
     width: 100%;

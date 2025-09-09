@@ -5,6 +5,7 @@ import Layout from '../layouts/Layout.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
 import { ensureMeSSR } from '../lib/auth/guard';
 import { getUserWorkflows, getUserGenerationHistory } from '../api/workflows';
+import { toBackendAbsoluteUrl } from '../lib/api/client';
 
 import CanCmp from '../components/Can.astro';
 
@@ -64,10 +65,10 @@ const userHistory = await getUserGenerationHistory({ cookies: cookieHeader || un
                   imageUrl = firstImage;
                 } else if (firstImage.startsWith('/comfy_out_image/')) {
                   // File path with prefix
-                  imageUrl = firstImage;
+                  imageUrl = toBackendAbsoluteUrl(firstImage);
                 } else {
                   // File path without prefix
-                  imageUrl = `/comfy_out_image/${firstImage}`;
+                  imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${firstImage}`);
                 }
               }
               

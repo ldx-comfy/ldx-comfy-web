@@ -157,9 +157,18 @@ const apiUrlTwoValue = API_URL_TWO;
               }
               if (images && images.length) {
                 const html = images.map((img) => {
-                  const url = String(img).startsWith('http')
-                    ? img
-                    : `${apiUrlTwo}/${String(img).replace(/^\/+/, '')}`;
+                  let url;
+                  const imgStr = String(img);
+                  if (imgStr.startsWith('data:')) {
+                    // Base64 data URL
+                    url = imgStr;
+                  } else if (imgStr.startsWith('http')) {
+                    // HTTP URL
+                    url = imgStr;
+                  } else {
+                    // File path - construct full URL
+                    url = `${apiUrlTwo}/${imgStr.replace(/^\/+/, '')}`;
+                  }
                   return `
                     <a href="${url}" target="_blank" rel="noopener noreferrer">
                       <img src="${url}" alt="Result image"
