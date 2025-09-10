@@ -1,0 +1,281 @@
+---
+export interface Props {
+  message: string;
+  type?: 'success' | 'error' | 'warning' | 'info';
+  duration?: number;
+  id?: string;
+  autoShow?: boolean;
+}
+
+const { message, type = 'info', duration = 3000, id = 'toast', autoShow = true } = Astro.props;
+---
+
+<div class={`toast toast-${type}`} id={id} data-duration={duration}>
+  <div class="toast-icon">
+    {type === 'success' && (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    )}
+    {type === 'error' && (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    )}
+    {type === 'warning' && (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    )}
+    {type === 'info' && (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    )}
+  </div>
+  <span class="toast-message">{message}</span>
+  <button class="toast-close" data-toast-close aria-label="Close">&times;</button>
+</div>
+
+<style>
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-primary, #111);
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+    box-shadow: 0 8px 25px var(--shadow-light, rgba(0, 0, 0, 0.12));
+    z-index: 1000;
+    max-width: 320px;
+    word-wrap: break-word;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+
+  .toast-success {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: rgba(76, 175, 80, 0.3);
+    color: #4caf50;
+  }
+
+  .toast-error {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+
+  .toast-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border-color: rgba(255, 152, 0, 0.3);
+    color: #ff9800;
+  }
+
+  .toast-info {
+    background: rgba(33, 150, 243, 0.1);
+    border-color: rgba(33, 150, 243, 0.3);
+    color: #2196f3;
+  }
+
+  .toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toast-icon svg {
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .toast-message {
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .toast-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    margin: -4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .toast-close:hover {
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.04));
+    color: var(--text-primary, #111);
+    transform: scale(1.1);
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 768px) {
+    .toast {
+      top: 16px;
+      right: 16px;
+      left: 16px;
+      max-width: none;
+      padding: 14px 16px;
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .toast {
+      top: 12px;
+      right: 12px;
+      left: 12px;
+      padding: 12px 14px;
+    }
+  }
+
+  /* Touch device specific styles */
+  @media (hover: none) and (pointer: coarse) {
+    .toast-close {
+      min-width: 32px;
+      min-height: 32px;
+    }
+
+    .toast-close:active {
+      transform: scale(0.95);
+    }
+  }
+</style>
+
+<style is:global>
+  /* Global stacking container so dynamically created container in document.body is styled */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: none;
+  }
+
+  /* When toasts are inside the container, switch to flow layout for stacking */
+  .toast-container .toast {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    margin: 0;
+    pointer-events: auto;
+  }
+
+  /* Hide non-visible toasts so they don't occupy space */
+  .toast-container .toast:not(.show) {
+    position: absolute;
+    visibility: hidden;
+  }
+</style>
+
+<script define:vars={{ autoShow, id }}>
+  (function () {
+    const DEFAULT_ID = 'toast';
+    const CONTAINER_ID = 'toast-container';
+
+    const getToast = (toastId = DEFAULT_ID) => document.getElementById(toastId);
+
+    function ensureContainer() {
+      let el = document.getElementById(CONTAINER_ID);
+      if (!el) {
+        el = document.createElement('div');
+        el.id = CONTAINER_ID;
+        el.className = 'toast-container';
+        document.body.appendChild(el);
+      }
+      return el;
+    }
+
+    function mountIntoContainer(toastEl) {
+      if (!toastEl) return;
+      const container = ensureContainer();
+      if (toastEl.parentElement !== container) {
+        // Newest appended at bottom for natural stacking
+        container.appendChild(toastEl);
+      }
+    }
+
+    function showToast(toastId = DEFAULT_ID) {
+      const toast = getToast(toastId);
+      if (!toast) return;
+      mountIntoContainer(toast);
+      toast.classList.add('show');
+      const durationAttr = toast.getAttribute('data-duration');
+      const duration = Number.parseInt(durationAttr || '3000', 10);
+      if (!Number.isNaN(duration) && duration > 0) {
+        window.setTimeout(() => closeToast(toastId), duration);
+      }
+    }
+
+    function closeToast(toastId = DEFAULT_ID) {
+      const toast = getToast(toastId);
+      if (toast) {
+        toast.classList.remove('show');
+        // 保留元素以便重复展示；不从 DOM 移除
+      }
+    }
+
+    // 绑定本实例并挂载到容器
+    const thisToast = getToast(id || DEFAULT_ID);
+    if (thisToast) {
+      mountIntoContainer(thisToast);
+      thisToast.querySelector('.toast-close')?.addEventListener('click', () => closeToast(id));
+    }
+
+    // 按需暴露到全局（不覆盖页面自定义的实现）
+    if (typeof window !== 'undefined') {
+      if (typeof window.showToast !== 'function') {
+        // @ts-ignore
+        window.showToast = showToast;
+      }
+      if (typeof window.closeToast !== 'function') {
+        // @ts-ignore
+        window.closeToast = closeToast;
+      }
+    }
+
+    // Auto-show：兼容文档已加载的场景
+    if (autoShow) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => showToast(id));
+      } else {
+        showToast(id);
+      }
+    }
+  })();
+</script>

@@ -1,6 +1,8 @@
 ---
 export const prerender = false;
 
+import Toast from '../components/Toast.astro';
+
 // Get all available languages and translator functions
 const { getAvailableLanguages, getTranslator } = await import('@gudupao/astro-i18n');
 const availableLanguages = getAvailableLanguages();
@@ -43,6 +45,21 @@ console.log('Test translations:', testTranslations);
   ))}
 </div>
 
+<!-- Toast Test Section -->
+<h2>Toast Test</h2>
+<div class="toast-test-buttons">
+  <button onclick="showToast('toast-success')">Show Success Toast</button>
+  <button onclick="showToast('toast-error')">Show Error Toast</button>
+  <button onclick="showToast('toast-warning')">Show Warning Toast</button>
+  <button onclick="showToast('toast-info')">Show Info Toast</button>
+</div>
+
+<!-- Toast Components -->
+<Toast id="toast-success" message="Operation completed successfully!" type="success" autoShow={false} />
+<Toast id="toast-error" message="An error occurred!" type="error" autoShow={false} />
+<Toast id="toast-warning" message="Warning: Please check your input." type="warning" autoShow={false} />
+<Toast id="toast-info" message="This is an informational message." type="info" autoShow={false} />
+
 <style>
   .debug-page {
     padding: 2rem;
@@ -66,4 +83,45 @@ console.log('Test translations:', testTranslations);
     border-radius: 4px;
     overflow-x: auto;
   }
+
+  .toast-test-buttons {
+    display: flex;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+  }
+
+  .toast-test-buttons button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .toast-test-buttons button:hover {
+    background: var(--bg-secondary);
+  }
 </style>
+
+<script>
+  function showToast(id: string) {
+    const toast = document.getElementById(id);
+    if (toast) {
+      const duration = parseInt(toast.getAttribute('data-duration') || '3000');
+      toast.classList.add('show');
+      setTimeout(() => {
+        closeToast(id);
+      }, duration);
+    }
+  }
+
+  function closeToast(id: string) {
+    const toast = document.getElementById(id);
+    if (toast) {
+      toast.classList.remove('show');
+    }
+  }
+</script>
