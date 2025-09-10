@@ -1,10 +1,16 @@
 ---
 import Sidebar from '../components/Sidebar.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
+import { ensureMeSSR } from '../lib/auth/guard';
 
 // Get language for HTML lang attribute
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
 const t = getTranslator(lang);
+
+// Get user info for sidebar
+const cookieHeader = Astro.request.headers.get('cookie');
+const guard = await ensureMeSSR(Astro.request.url, cookieHeader);
+const me = guard.me;
 
 // Props for customizing the page
 interface Props {
@@ -44,7 +50,7 @@ const pageTitle = title || t('sidebar.appName');
 	</head>
 	<body>
 		<div class="layout">
-			<Sidebar />
+			<Sidebar me={me} />
 			<main>
 				<slot />
 			</main>
