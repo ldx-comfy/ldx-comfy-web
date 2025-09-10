@@ -120,7 +120,14 @@
     "adminOnlyTitle": "管理员专属区域：",
     "adminOnlyContent": "你正在查看仅 admin 可见的内容。",
     "userInfo": "用户信息",
-    "availableWorkflows": "可用的工作流"
+    "availableWorkflows": "可用的工作流",
+    "resetPassword": "重置密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmNewPassword": "确认新密码",
+    "resetPasswordButton": "重置密码",
+    "passwordResetSuccess": "密码重置成功",
+    "passwordResetError": "密码重置失败"
   },
   "history": {
     "title": "生成历史",

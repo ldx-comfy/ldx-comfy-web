@@ -1,0 +1,84 @@
+---
+import type { MeClaims } from '../lib/auth/service';
+import { getMyPermissions } from '../api/workflows';
+
+interface Props {
+  me?: MeClaims | null;
+  permissionsAny?: string[];
+  permissionsAll?: string[];
+  elseText?: string;
+}
+
+const {
+  me = null,
+  permissionsAny = [],
+  permissionsAll = [],
+  elseText = ''
+} = Astro.props as Props;
+
+// 獲取當前用戶的權限
+let userPermissions: string[] = [];
+try {
+  if (me) {
+    const perms = await getMyPermissions();
+    userPermissions = perms.map(p => p.id);
+ }
+} catch (error) {
+  console.error('獲取用戶權限失敗:', error);
+}
+
+function hasAll(req: string[] = [], actual: string[] = []): boolean {
+  if (!req || req.length === 0) return true;
+  const set = new Set(actual.filter(Boolean));
+  return req.every((r) => set.has(r));
+}
+
+function hasAny(req: string[] = [], actual: string[] = []): boolean {
+  if (!req || req.length === 0) return true;
+  const set = new Set(actual.filter(Boolean));
+  return req.some((r) => set.has(r));
+}
+
+// 檢查通配符權限
+function checkWildcardPermission(reqPerm: string, actualPerms: string[]): boolean {
+  // 直接匹配
+  if (actualPerms.includes(reqPerm)) {
+    return true;
+  }
+  
+  // 通配符匹配 (例如: user:*)
+  if (reqPerm.endsWith(":*")) {
+    const prefix = reqPerm.slice(0, -2); // 移除 ":*"
+    return actualPerms.some(perm => perm.startsWith(prefix + ":"));
+  }
+  
+  return false;
+}
+
+function hasAllWithWildcard(req: string[] = [], actual: string[] = []): boolean {
+  if (!req || req.length === 0) return true;
+  return req.every((r) => checkWildcardPermission(r, actual));
+}
+
+function hasAnyWithWildcard(req: string[] = [], actual: string[] = []): boolean {
+  if (!req || req.length === 0) return true;
+  return req.some((r) => checkWildcardPermission(r, actual));
+}
+
+const allowed =
+  hasAllWithWildcard(permissionsAll, userPermissions) &&
+  hasAnyWithWildcard(permissionsAny, userPermissions);
+---
+
+{allowed ? (
+  <slot />
+) : elseText ? (
+  <span class="permission-guard-fallback">{elseText}</span>
+) : null}
+
+<style>
+  .permission-guard-fallback {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+</style>

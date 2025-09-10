@@ -120,7 +120,14 @@
     "adminOnlyTitle": "Admin-only area:",
     "adminOnlyContent": "You are viewing content visible only to admins.",
     "userInfo": "User Information",
-    "availableWorkflows": "Available Workflows"
+    "availableWorkflows": "Available Workflows",
+    "resetPassword": "Reset Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "resetPasswordButton": "Reset Password",
+    "passwordResetSuccess": "Password reset successfully",
+    "passwordResetError": "Password reset failed"
   },
   "history": {
     "title": "Generation History",

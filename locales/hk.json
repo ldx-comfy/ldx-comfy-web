@@ -116,7 +116,14 @@
     "adminOnlyTitle": "管理員專屬區域：",
     "adminOnlyContent": "您正在查看僅管理員可見的內容。",
     "userInfo": "用戶信息",
-    "availableWorkflows": "可用的工作流程"
+    "availableWorkflows": "可用的工作流程",
+    "resetPassword": "重置密碼",
+    "currentPassword": "當前密碼",
+    "newPassword": "新密碼",
+    "confirmNewPassword": "確認新密碼",
+    "resetPasswordButton": "重置密碼",
+    "passwordResetSuccess": "密碼重置成功",
+    "passwordResetError": "密碼重置失敗"
   },
   "history": {
     "title": "生成歷史",

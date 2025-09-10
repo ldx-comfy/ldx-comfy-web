@@ -404,7 +404,23 @@ export async function getUserInfo(userId: string, ctx?: ApiContext): Promise<Use
 
 // 重置用户密码
 export async function resetUserPassword(userId: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
-  return apiPost<{ message: string }>(`/admin/users/${userId}/reset-password`, { new_password: newPassword }, ctx);
+  return apiFetch<{ message: string }>(`/admin/users/${userId}/reset-password`, {
+    method: 'PUT',
+    body: { new_password: newPassword },
+    ctx
+  });
+}
+
+// 重置自己的密码
+export async function resetOwnPassword(currentPassword: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/admin/users/me/reset-password`, {
+    method: 'PUT',
+    body: {
+      current_password: currentPassword,
+      new_password: newPassword
+    },
+    ctx
+  });
 }
 
 // 获取用户详细信息
@@ -424,6 +440,11 @@ export async function updateUserGroups(userId: string, groups: string[], ctx?: A
 }
 
 // 身分組管理API函數
+
+// 獲取當前用戶的權限列表
+export async function getMyPermissions(ctx?: ApiContext): Promise<Permission[]> {
+  return apiGet<Permission[]>('/admin/groups/my/permissions', ctx);
+}
 
 // 身分組管理API函數
 // 獲取所有身分組列表（僅管理員）

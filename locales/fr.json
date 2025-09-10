@@ -116,7 +116,14 @@
     "adminOnlyTitle": "Zone réservée aux administrateurs :",
     "adminOnlyContent": "Vous consultez du contenu visible uniquement par les administrateurs.",
     "userInfo": "Informations sur l'utilisateur",
-    "availableWorkflows": "Flux de travail disponibles"
+    "availableWorkflows": "Flux de travail disponibles",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
+    "resetPasswordButton": "Réinitialiser le mot de passe",
+    "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
+    "passwordResetError": "Échec de la réinitialisation du mot de passe"
   },
   "history": {
     "title": "Historique de Génération",

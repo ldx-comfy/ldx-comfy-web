@@ -116,7 +116,14 @@
     "adminOnlyTitle": "管理者専用エリア:",
     "adminOnlyContent": "管理者のみが表示可能なコンテンツを表示しています。",
     "userInfo": "ユーザー情報",
-    "availableWorkflows": "利用可能なワークフロー"
+    "availableWorkflows": "利用可能なワークフロー",
+    "resetPassword": "パスワードをリセット",
+    "currentPassword": "現在のパスワード",
+    "newPassword": "新しいパスワード",
+    "confirmNewPassword": "新しいパスワードを確認",
+    "resetPasswordButton": "パスワードをリセット",
+    "passwordResetSuccess": "パスワードが正常にリセットされました",
+    "passwordResetError": "パスワードのリセットに失敗しました"
   },
   "history": {
     "title": "生成履歴",
