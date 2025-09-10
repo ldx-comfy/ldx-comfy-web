@@ -83,7 +83,13 @@
     "noImage": "无图片",
     "time": "时间",
     "imagesCount": "图片数量",
-    "noHistory": "暂无历史记录"
+    "noHistory": "暂无历史记录",
+    "workflowManagement": "工作流管理",
+    "uploadWorkflow": "上传工作流",
+    "upload": "上传",
+    "workflowList": "工作流列表",
+    "noWorkflows": "暂无工作流",
+    "delete": "删除"
   },
   "login": {
     "title": "登录",

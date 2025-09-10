@@ -83,7 +83,13 @@
     "noImage": "Pas d'image",
     "time": "Heure",
     "imagesCount": "Nombre d'images",
-    "noHistory": "Aucun historique"
+    "noHistory": "Aucun historique",
+    "workflowManagement": "Gestion des flux de travail",
+    "uploadWorkflow": "Télécharger un flux de travail",
+    "upload": "Télécharger",
+    "workflowList": "Liste des flux de travail",
+    "noWorkflows": "Aucun flux de travail",
+    "delete": "Supprimer"
   },
   "login": {
     "title": "Connexion",

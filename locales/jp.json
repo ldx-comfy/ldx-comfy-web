@@ -83,7 +83,13 @@
     "noImage": "画像なし",
     "time": "時間",
     "imagesCount": "画像数",
-    "noHistory": "履歴なし"
+    "noHistory": "履歴なし",
+    "workflowManagement": "ワークフロー管理",
+    "uploadWorkflow": "ワークフローをアップロード",
+    "upload": "アップロード",
+    "workflowList": "ワークフローリスト",
+    "noWorkflows": "ワークフローがありません",
+    "delete": "削除"
   },
   "login": {
     "title": "サインイン",

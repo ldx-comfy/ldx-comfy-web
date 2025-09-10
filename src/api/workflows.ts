@@ -196,3 +196,45 @@ export async function getAllUsersGenerationHistory(ctx?: ApiContext): Promise<Al
 export async function getAnyUserGenerationHistoryDetail(executionId: string, ctx?: ApiContext): Promise<Record<string, any>> {
   return apiGet<Record<string, any>>(`/forms/admin/history/${executionId}`, ctx);
 }
+
+
+// 上傳工作流文件
+export async function uploadWorkflow(file: File, ctx?: ApiContext): Promise<{ message: string; workflow_id: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await apiFetch('/forms/workflows/upload', {
+    method: 'POST',
+    body: formData,
+    ctx,
+    rawResponse: true,
+  }) as unknown as Response;
+  
+  if (!response.ok) {
+    let bodyText = '';
+    try { bodyText = await response.text(); } catch {}
+    console.error('[uploadWorkflow] HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
+    throw new Error(`上傳工作流文件失敗: ${response.status} ${response.statusText} Body: ${String(bodyText).slice(0, 500)}`);
+  }
+  
+  return response.json();
+}
+
+
+// 刪除工作流文件
+export async function deleteWorkflow(workflowId: string, ctx?: ApiContext): Promise<{ message: string }> {
+  const response = await apiFetch(`/forms/workflows/${workflowId}`, {
+    method: 'DELETE',
+    ctx,
+    rawResponse: true,
+  }) as unknown as Response;
+  
+  if (!response.ok) {
+    let bodyText = '';
+    try { bodyText = await response.text(); } catch {}
+    console.error('[deleteWorkflow] HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
+    throw new Error(`刪除工作流文件失敗: ${response.status} ${response.statusText} Body: ${String(bodyText).slice(0, 500)}`);
+  }
+  
+  return response.json();
+}
