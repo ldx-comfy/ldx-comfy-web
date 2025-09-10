@@ -29,7 +29,7 @@
   - [src/pages/login.astro](./src/pages/login.astro)
   - [src/pages/logout.astro](./src/pages/logout.astro)
   - [src/pages/me.astro](./src/pages/me.astro)
-  - [src/pages/admin.astro](./src/pages/admin.astro)
+  - [src/pages/admin/index.astro](./src/pages/admin/index.astro)
 - 改造
   - [src/api/workflows.ts](./src/api/workflows.ts)（移除硬编码基址、透传 Cookie、统一错误处理）
   - [src/pages/index.astro](./src/pages/index.astro)（SSR 透传 Cookie）
@@ -80,7 +80,7 @@ Token 持久化策略
   - `requireRolesSSR`/`requireGroupsSSR`：基于 `roles/groups` 的页面级拦截（不满足时返回 403）
 - 组件级包装： [src/components/Can.astro](./src/components/Can.astro)
   - 基于 `me` + `rolesAny/rolesAll/groupsAny/groupsAll` 条件显示/隐藏 `slot` 内容
-  - 示例见 [src/pages/me.astro](./src/pages/me.astro)、[src/pages/admin.astro](./src/pages/admin.astro)
+  - 示例见 [src/pages/me.astro](./src/pages/me.astro)、[src/pages/admin/index.astro](./src/pages/admin/index.astro)
 
 登录/登出与受保护页面
 - 登录页： [/login](./src/pages/login.astro)
@@ -90,7 +90,7 @@ Token 持久化策略
   - 清理 Cookie 并重定向到 `/login`
 - 身份页（受保护）： [/me](./src/pages/me.astro)
   - 展示当前 `claims`，并演示组件级 RBAC
-- 管理页（受保护 + RBAC）： [/admin](./src/pages/admin.astro)
+- 管理页（受保护 + RBAC）： [/admin](./src/pages/admin/index.astro)
   - 要求 `admin` 角色；调用 `/api/v1/auth/admin/ping` 验证
 
 对现有页面与 API 的改造

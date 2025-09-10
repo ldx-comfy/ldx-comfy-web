@@ -1,0 +1,171 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/AdminLayout.astro';
+import { requireRolesSSR } from '../../lib/auth/guard';
+import { pingAdmin } from '../../lib/auth/service';
+import CanCmp from '../../components/Can.astro';
+
+// Guard: require admin role
+const cookieHeader = Astro.request.headers.get('cookie');
+const guard = await requireRolesSSR(Astro.request.url, cookieHeader, { any: ['admin'] });
+if (guard.response) {
+  // 403 or redirect to login
+  return guard.response;
+}
+const me = guard.me!;
+
+// Optionally call protected endpoint to validate
+let pingResult: { ok?: boolean; sub?: string } | null = null;
+let pingError: string | null = null;
+try {
+  pingResult = await pingAdmin({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+  pingError = e?.message || 'Failed to call admin ping';
+}
+---
+
+<Layout title="管理员页面">
+  <div class="overview-page">
+    <div class="page-header">
+      <h1 class="page-title">管理员页面</h1>
+      <p class="page-description">仅 admin 角色可访问。本页将调用受保护接口 /api/v1/auth/admin/ping 验证可用性。</p>
+    </div>
+
+    <div class="overview-content">
+      <div class="overview-grid">
+        <div class="card">
+          <h3>当前身份</h3>
+          <pre class="json">{JSON.stringify(me, null, 2)}</pre>
+        </div>
+
+        <div class="card">
+          <h3>受保护接口验证</h3>
+          {pingError ? (
+            <div class="error">调用失败：{pingError}</div>
+          ) : (
+            <pre class="json">{JSON.stringify(pingResult, null, 2)}</pre>
+          )}
+        </div>
+
+        <div class="rbac-demo">
+          <h3>组件级 RBAC 示例</h3>
+          <CanCmp me={me} rolesAny={['admin']} elseText="您不是管理员，看不到这一段内容。">
+            <div class="admin-only">
+              <strong>仅 admin 可见：</strong> 你正在查看受 RBAC 控制的区块。
+            </div>
+          </CanCmp>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .overview-page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .page-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-description {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .overview-content {
+    min-height: 400px;
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .json {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+
+  .error {
+    color: #c62828;
+    background: #fee;
+    border: 1px solid #f44336;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .rbac-demo {
+    margin-top: 8px;
+  }
+
+  .admin-only {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .overview-page {
+      padding: 1rem;
+    }
+
+    .page-title {
+      font-size: 2rem;
+    }
+
+    .overview-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .overview-page {
+      padding: 0.75rem;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+    }
+
+    .card {
+      padding: 12px;
+    }
+  }
+</style>

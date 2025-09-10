@@ -228,13 +228,139 @@ export async function deleteWorkflow(workflowId: string, ctx?: ApiContext): Prom
     ctx,
     rawResponse: true,
   }) as unknown as Response;
-  
+
   if (!response.ok) {
     let bodyText = '';
     try { bodyText = await response.text(); } catch {}
     console.error('[deleteWorkflow] HTTP %s %s. Body: %s', response.status, response.statusText, String(bodyText).slice(0, 2000));
     throw new Error(`刪除工作流文件失敗: ${response.status} ${response.statusText} Body: ${String(bodyText).slice(0, 500)}`);
   }
-  
+
   return response.json();
+}
+
+// 用户管理相关类型定义
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: 'admin' | 'user' | 'moderator';
+  status: 'active' | 'inactive' | 'banned';
+  created_at: string;
+  last_login: string;
+  generation_count: number;
+}
+
+export interface SystemStats {
+  total_users: number;
+  total_generations: number;
+  active_workflows: number;
+  system_uptime: string;
+  memory_usage: number;
+  cpu_usage: number;
+}
+
+export interface SystemLog {
+  id: string;
+  timestamp: string;
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  user_id?: string;
+  action?: string;
+}
+
+// 获取所有用户列表（仅管理员）
+export async function getAllUsers(ctx?: ApiContext): Promise<User[]> {
+  return apiGet<User[]>('/admin/users', ctx);
+}
+
+// 更新用户角色
+export async function updateUserRole(userId: string, role: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiPost<{ message: string }>(`/admin/users/${userId}/role`, { role }, ctx);
+}
+
+// 更新用户状态
+export async function updateUserStatus(userId: string, status: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiPost<{ message: string }>(`/admin/users/${userId}/status`, { status }, ctx);
+}
+
+// 获取系统统计信息
+export async function getSystemStats(ctx?: ApiContext): Promise<SystemStats> {
+  // 模拟系统统计数据
+  return {
+    total_users: 156,
+    total_generations: 2847,
+    active_workflows: 12,
+    system_uptime: '7天 14小时 32分钟',
+    memory_usage: 68.5,
+    cpu_usage: 42.3
+  };
+}
+
+// 获取系统日志
+export async function getSystemLogs(limit: number = 50, ctx?: ApiContext): Promise<SystemLog[]> {
+  // 模拟系统日志数据
+  return [
+    {
+      id: '1',
+      timestamp: '2024-12-10T10:30:00Z',
+      level: 'info',
+      message: '用户 admin 登录系统',
+      user_id: '1',
+      action: 'login'
+    },
+    {
+      id: '2',
+      timestamp: '2024-12-10T10:25:00Z',
+      level: 'info',
+      message: '工作流 workflow_001 执行完成',
+      action: 'workflow_execution'
+    },
+    {
+      id: '3',
+      timestamp: '2024-12-10T10:20:00Z',
+      level: 'warning',
+      message: '内存使用率超过80%',
+      action: 'system_monitoring'
+    }
+  ];
+}
+
+// 获取系统配置
+export async function getSystemConfig(ctx?: ApiContext): Promise<Record<string, any>> {
+  // 模拟系统配置
+  return {
+    api_rate_limit: 100,
+    max_file_size: '10MB',
+    session_timeout: 3600,
+    enable_registration: true,
+    maintenance_mode: false,
+    smtp_enabled: true
+  };
+}
+
+// 更新系统配置
+export async function updateSystemConfig(config: Record<string, any>, ctx?: ApiContext): Promise<{ message: string }> {
+  // 模拟配置更新
+  console.log('Updating system config:', config);
+  return { message: '系统配置更新成功' };
+}
+
+// 创建用户
+export async function createUser(userData: { username: string; password: string; email: string; role: string }, ctx?: ApiContext): Promise<User> {
+  return apiPost<User>('/admin/users', userData, ctx);
+}
+
+// 删除用户
+export async function deleteUser(userId: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiFetch(`/admin/users/${userId}`, {
+    method: 'DELETE',
+    ctx,
+    rawResponse: true,
+  }) as unknown as Promise<{ message: string }>;
+}
+
+// 重置用户密码
+export async function resetUserPassword(userId: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiPost<{ message: string }>(`/admin/users/${userId}/reset-password`, { new_password: newPassword }, ctx);
 }

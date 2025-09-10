@@ -25,7 +25,11 @@
     "about": "About Us",
     "contact": "Contact Us",
     "me": "My Profile",
-    "admin": "Admin"
+    "admin": "Admin",
+    "adminPanel": "Admin Panel",
+    "adminDashboard": "Dashboard",
+    "executionHistory": "Execution History",
+    "backToMain": "Back to Main"
   },
   "theme": {
     "light": "Light",

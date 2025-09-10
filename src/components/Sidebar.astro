@@ -35,7 +35,7 @@ const isAdmin = hasAnyRole(me, ['admin']);
         <span>{t('sidebar.me')}</span>
       </a></li>
       {isAdmin && (
-        <li><a href="/admin" class="nav-link" data-path="/admin">
+        <li><a href="/admin/overview" class="nav-link" data-path="/admin/overview">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l7 4v6c0 5-7 10-7 10s-7-5-7-10V6l7-4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 8v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
           <span>{t('sidebar.admin')}</span>
         </a></li>
@@ -175,10 +175,12 @@ const isAdmin = hasAnyRole(me, ['admin']);
     
     navLinks.forEach(link => {
       const linkPath = link.getAttribute('data-path');
-      if (currentPath === linkPath || (linkPath === '/' && currentPath === '/') || currentPath.startsWith('/wfs/')) {
+      if (currentPath === linkPath || (linkPath === '/' && currentPath === '/') || currentPath.startsWith('/wfs/') || currentPath.startsWith('/admin/')) {
         if (linkPath === '/' && (currentPath === '/' || currentPath.startsWith('/wfs/'))) {
           link.classList.add('active');
-        } else if (linkPath !== '/' && currentPath === linkPath) {
+        } else if (linkPath === '/admin/overview' && currentPath.startsWith('/admin/')) {
+          link.classList.add('active');
+        } else if (linkPath !== '/' && linkPath !== '/admin/overview' && currentPath === linkPath) {
           link.classList.add('active');
         } else {
           link.classList.remove('active');

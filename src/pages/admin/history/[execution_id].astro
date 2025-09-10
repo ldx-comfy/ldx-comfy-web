@@ -2,16 +2,11 @@
 export const prerender = false;
 
 import Layout from '../../../layouts/Layout.astro';
-import { getTranslator } from '@gudupao/astro-i18n';
 import { requireRolesSSR } from '../../../lib/auth/guard';
 import { getAnyUserGenerationHistoryDetail } from '../../../api/workflows';
 import { toBackendAbsoluteUrl } from '../../../lib/api/client';
 
 import CanCmp from '../../../components/Can.astro';
-
-// i18n
-const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
-const t = getTranslator(lang);
 
 // Guard: require admin role
 const cookieHeader = Astro.request.headers.get('cookie');
@@ -36,49 +31,49 @@ try {
 }
 ---
 
-<Layout title={t('history.detail.title')}>
+<Layout title="历史记录详情">
   <div class="history-detail-page">
-    <h1 class="title">{t('history.detail.title')}</h1>
+    <h1 class="title">历史记录详情</h1>
     
     {error ? (
       <div class="error-section">
-        <h2>{t('history.detail.error')}</h2>
-        <p>{error.message || t('history.detail.errorMessage')}</p>
-        <a class="btn" href="/admin">{t('history.detail.backToHistory')}</a>
+        <h2>错误</h2>
+        <p>{error.message || '获取历史记录详情时发生错误'}</p>
+        <a class="btn" href="/admin">返回历史记录</a>
       </div>
     ) : historyDetail ? (
       <div class="detail-section">
         <div class="card">
-          <h2>{t('history.detail.information')}</h2>
+          <h2>信息</h2>
           <div class="info-grid">
             <div class="info-item">
-              <strong>{t('history.detail.executionId')}:</strong>
+              <strong>执行 ID:</strong>
               <span>{historyDetail.execution_id}</span>
             </div>
             <div class="info-item">
-              <strong>{t('history.detail.workflowId')}:</strong>
+              <strong>工作流 ID:</strong>
               <span>{historyDetail.workflow_id}</span>
             </div>
             <div class="info-item">
-              <strong>{t('history.detail.timestamp')}:</strong>
-              <span>{new Date(historyDetail.timestamp * 1000).toLocaleString(lang)}</span>
+              <strong>时间戳:</strong>
+              <span>{new Date(historyDetail.timestamp * 1000).toLocaleString('zh-CN')}</span>
             </div>
             <div class="info-item">
-              <strong>{t('history.detail.userId')}:</strong>
+              <strong>用户 ID:</strong>
               <span>{historyDetail.user_id}</span>
             </div>
           </div>
         </div>
         
         <div class="card">
-          <h2>{t('history.detail.inputParameters')}</h2>
+          <h2>输入参数</h2>
           {historyDetail.input_params ? (
             <div class="input-params-table">
               <table>
                 <thead>
                   <tr>
-                    <th>{t('history.detail.key')}</th>
-                    <th>{t('history.detail.value')}</th>
+                    <th>键</th>
+                    <th>值</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -98,12 +93,12 @@ try {
               </table>
             </div>
           ) : (
-            <p>{t('history.detail.noInputParameters')}</p>
+            <p>无输入参数</p>
           )}
         </div>
         
         <div class="card">
-          <h2>{t('history.detail.result')}</h2>
+          <h2>结果</h2>
           {historyDetail.result && historyDetail.result.images && historyDetail.result.images.length > 0 ? (
             <div class="images-grid">
               {historyDetail.result.images.map((image: string, index: number) => {
@@ -121,13 +116,13 @@ try {
                     imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${image}`);
                   }
                 }
-                
+
                 // Extract prompt from input_params
                 let prompt = '';
                 // Extract other parameters like steps, cfg_scale, etc.
                 let steps = '';
                 let cfgScale = '';
-                
+
                 if (historyDetail.input_params && historyDetail.input_params.nodes) {
                   const nodes = historyDetail.input_params.nodes;
                   // Find the node with text input
@@ -135,46 +130,46 @@ try {
                   if (textNode && textNode.value && textNode.value.text) {
                     prompt = textNode.value.text;
                   }
-                  
+
                   // Find other parameters
                   // This is a simplified example. You might need to adjust this based on the actual structure of your data.
                   const stepsNode = nodes.find((node: any) => node.title === 'Steps');
                   if (stepsNode && stepsNode.value) {
                     steps = stepsNode.value;
                   }
-                  
+
                   const cfgScaleNode = nodes.find((node: any) => node.title === 'CFG Scale');
                   if (cfgScaleNode && cfgScaleNode.value) {
                     cfgScale = cfgScaleNode.value;
                   }
                 }
-                
+
                 return (
                   <div class="image-result-container">
                     <div class="image-container">
                       {imageUrl ? (
                         <img
                           src={imageUrl}
-                          alt={`${t('history.detail.outputImage')} ${index + 1}`}
+                          alt={`输出图片 ${index + 1}`}
                           class="detail-image"
                         />
                       ) : (
-                        <div class="no-image">{t('history.noImage')}</div>
+                        <div class="no-image">无图片</div>
                       )}
                     </div>
                     <div class="details-container">
                       {prompt && (
                         <div class="detail-item">
-                          <strong>{t('history.detail.prompt')}:</strong>
+                          <strong>提示词:</strong>
                           <div class="prompt-box">{prompt}</div>
                         </div>
                       )}
                       {(steps || cfgScale) && (
                         <div class="detail-item">
-                          <strong>{t('history.detail.parameters')}:</strong>
+                          <strong>参数:</strong>
                           <div class="parameters-box">
-                            {steps && <div>{t('history.detail.steps')}: {steps}</div>}
-                            {cfgScale && <div>{t('history.detail.cfgScale')}: {cfgScale}</div>}
+                            {steps && <div>步数: {steps}</div>}
+                            {cfgScale && <div>CFG比例: {cfgScale}</div>}
                           </div>
                         </div>
                       )}
@@ -184,17 +179,17 @@ try {
               })}
             </div>
           ) : (
-            <p>{t('history.noImages')}</p>
+            <p>无图片</p>
           )}
         </div>
         
         <div class="actions">
-          <a class="btn" href="/admin">{t('history.detail.backToHistory')}</a>
+          <a class="btn" href="/admin">返回历史记录</a>
         </div>
       </div>
     ) : (
       <div class="loading-section">
-        <p>{t('history.detail.loading')}</p>
+        <p>正在加载历史记录详情...</p>
       </div>
     )}
   </div>

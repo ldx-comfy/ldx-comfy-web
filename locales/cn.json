@@ -25,7 +25,11 @@
     "about": "关于我们",
     "contact": "联系我们",
     "me": "我的",
-    "admin": "管理员"
+    "admin": "管理员",
+    "adminPanel": "管理面板",
+    "adminDashboard": "仪表板",
+    "executionHistory": "执行历史",
+    "backToMain": "返回主界面"
   },
   "theme": {
     "light": "浅色",
