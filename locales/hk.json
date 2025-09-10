@@ -108,7 +108,9 @@
     "adminOnlyArea": "以下區域僅管理員角色可見：",
     "noAdminPermission": "無管理員權限，內容已隱藏。",
     "adminOnlyTitle": "管理員專屬區域：",
-    "adminOnlyContent": "您正在查看僅管理員可見的內容。"
+    "adminOnlyContent": "您正在查看僅管理員可見的內容。",
+    "userInfo": "用戶信息",
+    "availableWorkflows": "可用的工作流程"
   },
   "history": {
     "title": "生成歷史",

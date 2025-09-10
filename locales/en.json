@@ -108,7 +108,9 @@
     "adminOnlyArea": "The area below is visible only to admin role:",
     "noAdminPermission": "No admin permission, content hidden.",
     "adminOnlyTitle": "Admin-only area:",
-    "adminOnlyContent": "You are viewing content visible only to admins."
+    "adminOnlyContent": "You are viewing content visible only to admins.",
+    "userInfo": "User Information",
+    "availableWorkflows": "Available Workflows"
   },
   "history": {
     "title": "Generation History",

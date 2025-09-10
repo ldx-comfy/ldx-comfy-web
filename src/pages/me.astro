@@ -32,14 +32,14 @@ const userHistory = await getUserGenerationHistory({ cookies: cookieHeader || un
     <h1 class="title">{t('me.title')}</h1>
     
     <div class="section">
-      <h2>用戶信息</h2>
+      <h2>{t('me.userInfo')}</h2>
       <div class="card">
         <pre class="json">{JSON.stringify(me, null, 2)}</pre>
       </div>
     </div>
     
     <div class="section">
-      <h2>可用的工作流</h2>
+      <h2>{t('me.availableWorkflows')}</h2>
       <div class="card">
         <ul>
           {userWorkflows.map((workflow) => (

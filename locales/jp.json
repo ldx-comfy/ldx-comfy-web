@@ -108,7 +108,9 @@
     "adminOnlyArea": "以下のエリアは管理者ロールのみが表示可能です:",
     "noAdminPermission": "管理者権限がありません。コンテンツは非表示です。",
     "adminOnlyTitle": "管理者専用エリア:",
-    "adminOnlyContent": "管理者のみが表示可能なコンテンツを表示しています。"
+    "adminOnlyContent": "管理者のみが表示可能なコンテンツを表示しています。",
+    "userInfo": "ユーザー情報",
+    "availableWorkflows": "利用可能なワークフロー"
   },
   "history": {
     "title": "生成履歴",

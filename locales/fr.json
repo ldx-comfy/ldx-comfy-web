@@ -108,7 +108,9 @@
     "adminOnlyArea": "La zone ci-dessous est visible uniquement pour le rôle administrateur :",
     "noAdminPermission": "Pas de permission administrateur, contenu masqué.",
     "adminOnlyTitle": "Zone réservée aux administrateurs :",
-    "adminOnlyContent": "Vous consultez du contenu visible uniquement par les administrateurs."
+    "adminOnlyContent": "Vous consultez du contenu visible uniquement par les administrateurs.",
+    "userInfo": "Informations sur l'utilisateur",
+    "availableWorkflows": "Flux de travail disponibles"
   },
   "history": {
     "title": "Historique de Génération",
