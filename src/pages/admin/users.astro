@@ -87,7 +87,7 @@ try {
                       <td>{user.generation_count}</td>
                       <td>
                         <div class="action-buttons">
-                          <button class="btn secondary edit-groups-btn" data-user-id={user.id} data-username={user.username}>编辑身分組</button>
+                          <button class="btn secondary edit-groups-btn" data-user-id={user.id} data-username={user.username}>编辑身份组</button>
                           <button class="btn warning reset-password-btn" data-user-id={user.id} data-username={user.username}>重置密码</button>
                           <button class="btn danger delete-user-btn" data-user-id={user.id} data-username={user.username}>删除</button>
                         </div>
@@ -100,7 +100,7 @@ try {
           </div>
         )}
       </div>
- </main>
+  </main>
 </Layout>
 
 <!-- 创建用户模态框 -->
@@ -125,15 +125,7 @@ try {
           <input type="email" id="new-email" />
         </div>
         <div class="form-group">
-          <label for="new-role">角色</label>
-          <select id="new-role">
-            <option value="user">普通用户</option>
-            <option value="moderator">版主</option>
-            <option value="admin">管理员</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="new-groups">身分組</label>
+          <label for="new-groups">身份组</label>
           <div id="groups-checkboxes">
             {allGroups.map((group) => (
               <div class="group-checkbox">
@@ -173,17 +165,17 @@ try {
   </div>
 </div>
 
-<!-- 编辑用户身分組模态框 -->
+<!-- 编辑用户身份组模态框 -->
 <div id="edit-groups-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>编辑用户身分組</h3>
+      <h3>编辑用户身份组</h3>
       <button class="modal-close">&times;</button>
     </div>
     <div class="modal-body">
       <p id="edit-groups-message"></p>
       <div class="form-group">
-        <label>身分組</label>
+        <label>身份组</label>
         <div id="edit-groups-checkboxes">
           {allGroups.map((group) => (
             <div class="group-checkbox">
@@ -1160,7 +1152,8 @@ try {
       const username = (document.getElementById('new-username') as HTMLInputElement)?.value.trim();
       const password = (document.getElementById('new-password') as HTMLInputElement)?.value;
       const email = (document.getElementById('new-email') as HTMLInputElement)?.value.trim();
-      const role = (document.getElementById('new-role') as HTMLSelectElement)?.value;
+      // 移除角色变量定义，因为角色字段已被删除
+      // const role = (document.getElementById('new-role') as HTMLSelectElement)?.value;
 
       if (!username || !password) {
         showToast('用户名和密码不能为空', 'error');
@@ -1173,7 +1166,7 @@ try {
       }
 
       try {
-        // 獲取選中的身分組
+        // 获取选中的身份组
         const selectedGroups = Array.from(
           document.querySelectorAll('#groups-checkboxes input[type="checkbox"]:checked')
         ).map(cb => (cb as HTMLInputElement).value);
@@ -1182,8 +1175,8 @@ try {
           username,
           password,
           email: email || `${username}@example.com`,
-          role,
-          groups: selectedGroups
+          groups: selectedGroups,
+          role: "user" // Hardcode role to 'user' as it's no longer selectable
         };
 
         const result = await createUser(userData);
@@ -1294,7 +1287,7 @@ try {
   
         const editMessage = document.getElementById('edit-groups-message');
         if (editMessage) {
-          editMessage.textContent = `为用户 "${username}" 编辑身分組：`;
+          editMessage.textContent = `为用户 "${username}" 编辑身份组：`;
         }
   
         const editModal = document.getElementById('edit-groups-modal');
@@ -1328,10 +1321,10 @@ try {
   
           try {
             await updateUserGroups(userId, selectedGroups);
-            showToast('身分組更新成功', 'success');
+            showToast('身份组更新成功', 'success');
             editModal?.classList.remove('show');
           } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : '更新身分組失败';
+            const errorMessage = error instanceof Error ? error.message : '更新身份组失败';
             showToast(`更新失败: ${errorMessage}`, 'error');
           }
         };
@@ -1359,7 +1352,7 @@ try {
           editModal.addEventListener('click', closeEditModalHandler);
         }
       });
-   });
+    });
 
   // 重置密码功能
   document.querySelectorAll('.reset-password-btn').forEach(button => {

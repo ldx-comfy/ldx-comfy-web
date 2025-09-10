@@ -1,0 +1,512 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireRolesSSR } from '../../lib/auth/guard';
+import { getAllCodes, createCode, deleteCode, getSystemPermissions, getAllGroups } from '../../api/workflows';
+
+// Guard: require admin role
+const cookieHeader = Astro.request.headers.get('cookie');
+const guard = await requireRolesSSR(Astro.request.url, cookieHeader, { any: ['admin'] });
+if (guard.response) {
+  return guard.response;
+}
+
+// Fetch all codes
+let allCodes: any[] = [];
+let codesError: string | null = null;
+try {
+  allCodes = await getAllCodes({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+  codesError = e?.message || 'Failed to fetch codes list';
+}
+
+// Fetch all groups for permissions and group assignment
+let allGroups: any[] = [];
+let groupsError: string | null = null;
+try {
+  allGroups = await getAllGroups({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+  groupsError = e?.message || 'Failed to fetch groups list';
+}
+
+let allPermissions: any[] = [];
+let permissionsError: string | null = null;
+try {
+    allPermissions = await getSystemPermissions({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+    permissionsError = e?.message || 'Failed to fetch system permissions';
+}
+---
+
+<AdminLayout title="授权码管理">
+  <div class="codes-page">
+    <div class="header">
+      <h1>授权码管理</h1>
+      <p class="description">管理授权码，用于用户登录和权限控制。</p>
+    </div>
+
+    <div class="content-grid">
+      <!-- Create new code section -->
+      <div class="card create-section">
+        <h2>创建新授权码</h2>
+        <form id="create-code-form" class="create-form">
+          <div class="form-group">
+            <label for="code-name">名称 *</label>
+            <input type="text" id="code-name" required placeholder="输入名称..." />
+          </div>
+          
+          <div class="form-group">
+            <label for="expires-in-seconds">有效期 (秒)</label>
+            <input type="number" id="expires-in-seconds" value="3600" min="60" />
+          </div>
+          
+          
+          <div class="form-group">
+            <label>身份组 (可选)</label>
+            <div class="checkbox-group" id="new-code-groups-checkboxes">
+              {
+                (allGroups && allGroups.length > 0) ?
+                allGroups.map((group) => (
+                  <div class="checkbox-item">
+                    <input type="checkbox" id={`code-group-${group.id}`} value={group.id} />
+                    <label for={`code-group-${group.id}`}>{group.name}</label>
+                  </div>
+                )) : <p class="empty-message">暂无可用身份组</p>
+              }
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>权限 (可选)</label>
+            <div class="checkbox-group" id="new-code-permissions-checkboxes">
+              {
+                (allPermissions && allPermissions.length > 0) ?
+                allPermissions.map((permission) => (
+                  <div class="checkbox-item">
+                    <input type="checkbox" id={`code-perm-${permission.id}`} value={permission.id} />
+                    <label for={`code-perm-${permission.id}`}>{permission.name} ({permission.id})</label>
+                  </div>
+                )) : <p class="empty-message">暂无可用权限</p>
+              }
+            </div>
+          </div>
+          
+          <button type="submit" class="btn primary">创建授权码</button>
+        </form>
+      </div>
+
+      <!-- Codes list -->
+      <div class="card codes-list-section">
+        <div class="section-header">
+          <h2>现有授权码</h2>
+          <span class="count">共 {allCodes.length} 个</span>
+        </div>
+        
+        {codesError ? (
+          <div class="error-message">{codesError}</div>
+        ) : allCodes.length > 0 ? (
+          <div class="codes-list">
+            {allCodes.map((code) => (
+              <div class="code-item" data-code={code.code}>
+                <div class="code-header">
+                  <span class="code-value">{code.code}</span>
+                  <button class="btn-icon delete-code-btn" data-code={code.code} title="删除授权码">
+                    <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4906" width="200" height="200"><path d="M861.184 192.512q30.72 0 50.688 10.24t31.744 25.6 16.384 33.28 4.608 33.28q0 7.168-0.512 11.264t-0.512 7.168l0 6.144-67.584 0 0 537.6q0 20.48-8.192 39.424t-23.552 33.28-37.376 23.04-50.688 8.704l-456.704 0q-26.624 0-50.176-8.192t-40.448-23.04-26.624-35.84-9.728-47.616l0-527.36-63.488 0q-1.024-1.024-1.024-5.12-1.024-5.12-1.024-31.744 0-13.312 6.144-29.696t18.432-30.208 31.744-23.04 46.08-9.216l91.136 0 0-62.464q0-26.624 18.432-45.568t45.056-18.944l320.512 0q35.84 0 49.664 18.944t13.824 45.568l0 63.488q21.504 1.024 46.08 1.024l47.104 0zM384 192.512l320.512 0 0-64.512-320.512 0 0 64.512zM352.256 840.704q32.768 0 32.768-41.984l0-475.136-63.488 0 0 475.136q0 21.504 6.656 31.744t24.064 10.24zM545.792 839.68q17.408 0 23.552-9.728t6.144-31.232l0-475.136-63.488 0 0 475.136q0 40.96 33.792 40.96zM738.304 837.632q18.432 0 24.576-9.728t6.144-31.232l0-473.088-64.512 0 0 473.088q0 40.96 33.792 40.96z" p-id="4907"></path></svg>
+                  </button>
+                </div>
+                <div class="code-details">
+                  <div class="detail-item">
+                    <span class="label">过期时间:</span>
+                    <span class="value">{new Date(code.expires_at).toLocaleString('zh-CN')}</span>
+                  </div>
+                  {code.roles && code.roles.length > 0 && (
+                    <div class="detail-item">
+                      <span class="label">角色:</span>
+                      <span class="value">{code.roles.join(', ')}</span>
+                    </div>
+                  )}
+                  {code.groups && code.groups.length > 0 && (
+                    <div class="detail-item">
+                      <span class="label">身分组:</span>
+                      <span class="value">{code.groups.join(', ')}</span>
+                    </div>
+                  )}
+                  {code.permissions && code.permissions.length > 0 && (
+                    <div class="detail-item">
+                      <span class="label">权限:</span>
+                      <span class="value">{code.permissions.join(', ')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <div class="empty-icon">
+                <svg class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4906" width="200" height="200"><path d="M861.184 192.512q30.72 0 50.688 10.24t31.744 25.6 16.384 33.28 4.608 33.28q0 7.168-0.512 11.264t-0.512 7.168l0 6.144-67.584 0 0 537.6q0 20.48-8.192 39.424t-23.552 33.28-37.376 23.04-50.688 8.704l-456.704 0q-26.624 0-50.176-8.192t-40.448-23.04-26.624-35.84-9.728-47.616l0-527.36-63.488 0q-1.024-1.024-1.024-5.12-1.024-5.12-1.024-31.744 0-13.312 6.144-29.696t18.432-30.208 31.744-23.04 46.08-9.216l91.136 0 0-62.464q0-26.624 18.432-45.568t45.056-18.944l320.512 0q35.84 0 49.664 18.944t13.824 45.568l0 63.488q21.504 1.024 46.08 1.024l47.104 0zM384 192.512l320.512 0 0-64.512-320.512 0 0 64.512zM352.256 840.704q32.768 0 32.768-41.984l0-475.136-63.488 0 0 475.136q0 21.504 6.656 31.744t24.064 10.24zM545.792 839.68q17.408 0 23.552-9.728t6.144-31.232l0-475.136-63.488 0 0 475.136q0 40.96 33.792 40.96zM738.304 837.632q18.432 0 24.576-9.728t6.144-31.232l0-473.088-64.512 0 0 473.088q0 40.96 33.792 40.96z" p-id="4907"></path></svg>
+            </div>
+            <h3>暂无授权码</h3>
+            <p class="empty-hint">创建新的授权码以供用户登录。</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<style>
+  .codes-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+ .header h1 {
+    color: var(--text-primary);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .description {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (min-width: 992px) {
+    .content-grid {
+      grid-template-columns: 1fr 2fr;
+    }
+  }
+
+  .card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-header h2 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin: 0;
+  }
+
+  .count {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .create-section h2,
+  .codes-list-section h2 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    margin-top: 0;
+  }
+
+  .create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="number"] {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+  }
+
+  .form-group input[type="text"]:focus,
+  .form-group input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .checkbox-item input {
+    margin-right: 0.5rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+
+  .btn.primary {
+    background: var(--accent-color);
+    color: white;
+  }
+
+  .btn.primary:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-icon:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  .codes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .code-item {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    transition: all 0.2s ease;
+    padding: 1.5rem;
+  }
+
+  .code-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent-color);
+  }
+
+  .code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .code-value {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+  }
+
+  .code-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .detail-item {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 80px;
+  }
+
+  .value {
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-icon {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-state h3 {
+    margin: 1rem 0 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .empty-message {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 0.5rem 0;
+  }
+
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .codes-page {
+      padding: 0;
+    }
+
+    .card {
+      padding: 1.5rem;
+    }
+
+    .code-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .detail-item {
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .label {
+      min-width: auto;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .card {
+      padding: 1rem;
+    }
+
+    .code-item {
+      padding: 1rem;
+    }
+  }
+</style>
+
+<script>
+  import { createCode, deleteCode } from '../../api/workflows';
+  import { showToast } from '../../scripts/utils'; // Assuming showToast is in a utility file
+
+ // Handle code creation
+ document.getElementById('create-code-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const nameInput = document.getElementById('code-name') as HTMLInputElement;
+    const expiresInInput = document.getElementById('expires-in-seconds') as HTMLInputElement;
+    
+    if (!nameInput || !expiresInInput) return;
+
+    const name = nameInput.value.trim();
+    const expiresInSeconds = parseInt(expiresInInput.value);
+
+    // 获取选中的身份组
+    const selectedGroups = Array.from(
+        document.querySelectorAll('#new-code-groups-checkboxes input[type="checkbox"]:checked')
+    ).map(cb => (cb as HTMLInputElement).value);
+
+    // 获取选中的权限
+    const selectedPermissions = Array.from(
+        document.querySelectorAll('#new-code-permissions-checkboxes input[type="checkbox"]:checked')
+    ).map(cb => (cb as HTMLInputElement).value);
+
+    if (!name) {
+      showToast('名称不能为空', 'error');
+      return;
+    }
+    
+    if (isNaN(expiresInSeconds) || expiresInSeconds <= 0) {
+        showToast('有效期必须是大于0的数字', 'error');
+        return;
+    }
+
+    try {
+      await createCode({ name, expires_in_seconds: expiresInSeconds, groups: selectedGroups, permissions: selectedPermissions });
+      showToast('授权码创建成功', 'success');
+      nameInput.value = '';
+      expiresInInput.value = '3600';
+      // Uncheck all checkboxes
+      document.querySelectorAll('#new-code-groups-checkboxes input[type="checkbox"]').forEach(cb => { (cb as HTMLInputElement).checked = false; });
+      document.querySelectorAll('#new-code-permissions-checkboxes input[type="checkbox"]').forEach(cb => { (cb as HTMLInputElement).checked = false; });
+
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } catch (error: any) {
+      showToast(`创建失败: ${error.message || '未知错误'}`, 'error');
+    }
+  });
+
+  // Handle code deletion
+  document.querySelectorAll('.delete-code-btn').forEach(button => {
+    button.addEventListener('click', async function(this: HTMLButtonElement) {
+      const code = this.getAttribute('data-code');
+      if (!code) return;
+
+      if (confirm(`确定要删除授权码 "${code}" 吗？此操作不可撤销。`)) {
+        try {
+          await deleteCode(code);
+          showToast('授权码删除成功', 'success');
+          this.closest('.code-item')?.remove();
+        } catch (error: any) {
+          showToast(`删除失败: ${error.message || '未知错误'}`, 'error');
+        }
+      }
+    });
+  });
+
+  // Default selection for roles when creating new code
+  document.addEventListener('DOMContentLoaded', () => {
+    const userRoleCheckbox = document.getElementById('role-user') as HTMLInputElement;
+    if (userRoleCheckbox) userRoleCheckbox.checked = true;
+  });
+</script>

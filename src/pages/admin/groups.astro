@@ -24,12 +24,12 @@ try {
 }
 ---
 
-<Layout title="身分組管理">
-  <!-- 主内容区域 -->
+<Layout title="身份组管理">
+  <!-- 主要内容区域 -->
   <main class="admin-main">
       <div class="groups-page">
-        <h1 class="page-title">身分組管理</h1>
-        <p class="page-desc">管理用戶身分組</p>
+        <h1 class="page-title">身份组管理</h1>
+        <p class="page-desc">管理用户身份组</p>
 
         {groupsError ? (
           <div class="error">{groupsError}</div>
@@ -37,12 +37,12 @@ try {
           <div class="groups-container">
             <div class="groups-header">
               <div class="header-left">
-                <h3>身分組列表</h3>
-                <button class="btn primary" id="create-group-btn">創建身分組</button>
+                <h3>身份组列表</h3>
+                <button class="btn primary" id="create-group-btn">创建身份组</button>
               </div>
               <div class="search-filter">
                 <div class="search-group">
-                  <input type="text" id="group-search" placeholder="搜索身分組名稱..." class="search-input" />
+                  <input type="text" id="group-search" placeholder="搜索身份组名称..." class="search-input" />
                   <button class="btn secondary clear-search" id="clear-search">清除</button>
                 </div>
               </div>
@@ -52,11 +52,11 @@ try {
               <table class="groups-table">
                 <thead>
                   <tr>
-                    <th>身分組名稱</th>
+                    <th>身份组名称</th>
                     <th>描述</th>
-                    <th>權限數量</th>
-                    <th>等級</th>
-                    <th>創建時間</th>
+                    <th>权限数量</th>
+                    <th>等级</th>
+                    <th>创建时间</th>
                     <th>操作</th>
                   </tr>
                 </thead>
@@ -70,8 +70,8 @@ try {
                       <td>{new Date(group.created_at).toLocaleDateString('zh-CN')}</td>
                       <td>
                         <div class="action-buttons">
-                          <button class="btn secondary edit-group-btn" data-group-id={group.id} data-group-name={group.name}>編輯</button>
-                          <button class="btn danger delete-group-btn" data-group-id={group.id} data-group-name={group.name}>刪除</button>
+                          <button class="btn secondary edit-group-btn" data-group-id={group.id} data-group-name={group.name}>编辑</button>
+                          <button class="btn danger delete-group-btn" data-group-id={group.id} data-group-name={group.name}>删除</button>
                         </div>
                       </td>
                     </tr>
@@ -85,21 +85,21 @@ try {
   </main>
 </Layout>
 
-<!-- 创建身分組模态框 -->
+<!-- 创建身份组模态框 -->
 <div id="create-group-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>創建新身分組</h3>
+      <h3>创建新身份组</h3>
       <button class="modal-close">&times;</button>
     </div>
     <div class="modal-body">
       <form id="create-group-form">
         <div class="form-group">
-          <label for="new-group-id">身分組ID *</label>
+          <label for="new-group-id">身份组ID *</label>
           <input type="text" id="new-group-id" required />
         </div>
         <div class="form-group">
-          <label for="new-group-name">身分組名稱 *</label>
+          <label for="new-group-name">身份组名称 *</label>
           <input type="text" id="new-group-name" required />
         </div>
         <div class="form-group">
@@ -107,36 +107,36 @@ try {
           <textarea id="new-group-description" rows="3"></textarea>
         </div>
         <div class="form-group">
-          <label for="new-group-level">等級</label>
+          <label for="new-group-level">等级</label>
           <input type="number" id="new-group-level" value="50" min="1" max="100" />
         </div>
         <div class="form-group">
-          <label>權限</label>
+          <label>权限</label>
           <div id="permissions-checkboxes">
-            <!-- 權限複選框將通過JavaScript動態生成 -->
+            <!-- 权限复选框将通过JavaScript动态生成 -->
           </div>
         </div>
       </form>
     </div>
     <div class="modal-footer">
       <button class="btn secondary" id="cancel-create">取消</button>
-      <button class="btn primary" id="confirm-create">創建</button>
+      <button class="btn primary" id="confirm-create">创建</button>
     </div>
   </div>
 </div>
 
-<!-- 編輯身分組模态框 -->
+<!-- 编辑身份组模态框 -->
 <div id="edit-group-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>編輯身分組</h3>
+      <h3>编辑身份组</h3>
       <button class="modal-close">&times;</button>
     </div>
     <div class="modal-body">
       <form id="edit-group-form">
         <input type="hidden" id="edit-group-id" />
         <div class="form-group">
-          <label for="edit-group-name">身分組名稱 *</label>
+          <label for="edit-group-name">身份组名称 *</label>
           <input type="text" id="edit-group-name" required />
         </div>
         <div class="form-group">
@@ -144,13 +144,13 @@ try {
           <textarea id="edit-group-description" rows="3"></textarea>
         </div>
         <div class="form-group">
-          <label for="edit-group-level">等級</label>
+          <label for="edit-group-level">等级</label>
           <input type="number" id="edit-group-level" min="1" max="100" />
         </div>
         <div class="form-group">
-          <label>權限</label>
+          <label>权限</label>
           <div id="edit-permissions-checkboxes">
-            <!-- 權限複選框將通過JavaScript動態生成 -->
+            <!-- 权限复选框将通过JavaScript动态生成 -->
           </div>
         </div>
       </form>
@@ -162,11 +162,11 @@ try {
   </div>
 </div>
 
-<!-- 删除身分組模态框 -->
+<!-- 删除身份组模态框 -->
 <div id="delete-group-modal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>删除身分組</h3>
+      <h3>删除身份组</h3>
       <button class="modal-close">&times;</button>
     </div>
     <div class="modal-body">
@@ -852,7 +852,7 @@ try {
   // 已在文件頂部導入API函數
   import { createGroup, updateGroup, deleteGroup, getSystemPermissions, getGroup } from '../../api/workflows';
   
-  // 獲取cookie header
+  // 获取cookie header
   const cookieHeader = document.cookie;
 
   // 辅助函数 - 使用 Toast 组件进行通知（支持堆叠）
@@ -913,8 +913,8 @@ try {
     }, duration);
   }
 
-  // 身分組管理功能
-  // 身分組搜索和过滤
+  // 身份组管理功能
+  // 身份组搜索和过滤
   const groupSearchInput = document.getElementById('group-search') as HTMLInputElement;
   const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
 
@@ -944,7 +944,7 @@ try {
 
   function updateFilterStats(visible: number, total: number) {
     // 可以在这里添加显示过滤统计的代码
-    console.log(`显示 ${visible} / ${total} 个身分組`);
+    console.log(`显示 ${visible} / ${total} 个身份组`);
   }
 
   function clearSearch() {
@@ -963,7 +963,7 @@ try {
     searchTimeout = window.setTimeout(filterGroups, 300);
   });
 
-  // 创建身分組功能
+  // 创建身份组功能
   const createGroupBtn = document.getElementById('create-group-btn') as HTMLButtonElement;
   const createGroupModal = document.getElementById('create-group-modal') as HTMLDivElement;
   const createGroupForm = document.getElementById('create-group-form') as HTMLFormElement;
@@ -974,7 +974,7 @@ try {
     if (createGroupForm) createGroupForm.reset();
     if (createGroupModal) createGroupModal.classList.add('show');
     
-    // 獲取系統權限列表並生成複選框
+    // 获取系统权限列表并生成复选框
     generatePermissionCheckboxes('permissions-checkboxes');
   }
 
@@ -1006,7 +1006,7 @@ try {
     ).map(cb => (cb as HTMLInputElement).value);
 
     if (!groupId || !groupName) {
-      showToast('身分組ID和名稱不能為空', 'error');
+      showToast('身份组ID和名称不能为空', 'error');
       return;
     }
 
@@ -1019,20 +1019,20 @@ try {
         level: groupLevel
       });
 
-      showToast('身分組創建成功', 'success');
+      showToast('身份组创建成功', 'success');
       hideCreateGroupModal();
 
-      // 刷新页面以显示新身分組
+      // 刷新页面以显示新身份组
       setTimeout(() => {
         location.reload();
       }, 1000);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '創建身分組失敗';
-      showToast(`創建失敗: ${errorMessage}`, 'error');
+      const errorMessage = error instanceof Error ? error.message : '创建身份组失败';
+      showToast(`创建失败: ${errorMessage}`, 'error');
     }
   });
 
-  // 删除身分組功能
+  // 删除身份组功能
   document.querySelectorAll('.delete-group-btn').forEach(button => {
     button.addEventListener('click', async function(this: HTMLButtonElement) {
       const groupId = this.getAttribute('data-group-id');
@@ -1043,7 +1043,7 @@ try {
       // 更新删除模态框的内容
       const deleteMessage = document.getElementById('delete-group-message');
       if (deleteMessage) {
-        deleteMessage.textContent = `確定要删除身分組 "${groupName}" 嗎？此操作不可撤銷。`;
+        deleteMessage.textContent = `确定要删除身份组 "${groupName}" 吗？此操作不可撤销。`;
       }
 
       const deleteModal = document.getElementById('delete-group-modal');
@@ -1056,15 +1056,15 @@ try {
       const handleConfirm = async () => {
         try {
           await deleteGroup(groupId);
-          showToast('身分組删除成功', 'success');
+          showToast('身份组删除成功', 'success');
           deleteModal?.classList.remove('show');
 
-          // 从表格中移除身分組行
+          // 从表格中移除身份组行
           const groupRow = document.querySelector(`.group-row[data-group-id="${groupId}"]`);
           groupRow?.remove();
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : '删除身分組失敗';
-          showToast(`删除失敗: ${errorMessage}`, 'error');
+          const errorMessage = error instanceof Error ? error.message : '删除身份组失败';
+          showToast(`删除失败: ${errorMessage}`, 'error');
         }
       };
 
@@ -1092,7 +1092,7 @@ try {
     });
   });
 
-  // 編輯身分組功能
+  // 编辑身份组功能
   document.querySelectorAll('.edit-group-btn').forEach(button => {
     button.addEventListener('click', async function(this: HTMLButtonElement) {
       const groupId = this.getAttribute('data-group-id');
@@ -1105,30 +1105,30 @@ try {
         const groupData = await getGroup(groupId);
         
         if (!groupData) {
-          showToast('身分組信息未找到', 'error');
+          showToast('身份组信息未找到', 'error');
           return;
         }
         
-        // 填充表單
+        // 填充表单
         (document.getElementById('edit-group-id') as HTMLInputElement).value = groupData.id;
         (document.getElementById('edit-group-name') as HTMLInputElement).value = groupData.name;
         (document.getElementById('edit-group-description') as HTMLTextAreaElement).value = groupData.description;
         (document.getElementById('edit-group-level') as HTMLInputElement).value = groupData.level.toString();
         
-        // 生成權限複選框並選中相應的項目
+        // 生成权限复选框并选中相应的项目
         generatePermissionCheckboxes('edit-permissions-checkboxes', groupData.permissions);
         
-        // 顯示模態框
+        // 显示模态框
         const editModal = document.getElementById('edit-group-modal');
         editModal?.classList.add('show');
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : '獲取身分組信息失敗';
-        showToast(`獲取信息失敗: ${errorMessage}`, 'error');
+        const errorMessage = error instanceof Error ? error.message : '获取身份组信息失败';
+        showToast(`获取信息失败: ${errorMessage}`, 'error');
       }
     });
   });
 
-  // 編輯身分組確認按鈕
+  // 编辑身份组确认按钮
   const confirmEditBtn = document.getElementById('confirm-edit') as HTMLButtonElement;
   const cancelEditBtn = document.getElementById('cancel-edit') as HTMLButtonElement;
   const editGroupModal = document.getElementById('edit-group-modal') as HTMLDivElement;
@@ -1159,7 +1159,7 @@ try {
     ).map(cb => (cb as HTMLInputElement).value);
 
     if (!groupId || !groupName) {
-      showToast('身分組名稱不能為空', 'error');
+      showToast('身份组名称不能为空', 'error');
       return;
     }
 
@@ -1171,7 +1171,7 @@ try {
         level: groupLevel
       });
 
-      showToast('身分組更新成功', 'success');
+      showToast('身份组更新成功', 'success');
       editGroupModal?.classList.remove('show');
 
       // 刷新页面以显示更新
@@ -1179,15 +1179,15 @@ try {
         location.reload();
       }, 1000);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '更新身分組失敗';
-      showToast(`更新失敗: ${errorMessage}`, 'error');
+      const errorMessage = error instanceof Error ? error.message : '更新身份组失败';
+      showToast(`更新失败: ${errorMessage}`, 'error');
     }
   });
 
-  // 生成權限複選框的函數
+  // 生成权限复选框的函数
   async function generatePermissionCheckboxes(containerId: string, selectedPermissions: string[] = []) {
     try {
-      // 獲取系統權限列表
+      // 获取系统权限列表
       const permissions = await getSystemPermissions();
       
       const container = document.getElementById(containerId);
@@ -1196,7 +1196,7 @@ try {
       // 清空容器
       container.innerHTML = '';
       
-      // 生成複選框
+      // 生成复选框
       permissions.forEach((permission: { id: string; name: string }) => {
         const div = document.createElement('div');
         div.className = 'permission-checkbox';
@@ -1216,8 +1216,8 @@ try {
         container.appendChild(div);
       });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '獲取權限列表失敗';
-      showToast(`獲取權限列表失敗: ${errorMessage}`, 'error');
+      const errorMessage = error instanceof Error ? error.message : '获取权限列表失败';
+      showToast(`获取权限列表失败: ${errorMessage}`, 'error');
     }
   }
 </script>

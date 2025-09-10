@@ -39,7 +39,7 @@ try {
           <form id="upload-form" class="upload-form">
             <div class="form-group">
               <label for="workflow-file">选择工作流文件 (.json)</label>
-              <!-- 拖拽上傳區域 -->
+              <!-- 拖拽上传区域 -->
               <div id="workflow-upload-box" class="upload-box">
                 <div class="upload-content">
                   <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -48,7 +48,7 @@ try {
                     <path d="M12 1v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                     <path d="M9 14l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
                   </svg>
-                  <p>拖拽工作流文件到此處或點擊選擇文件</p>
+                  <p>拖拽工作流文件到此处或点击选择文件</p>
                   <p class="file-info" id="file-info"></p>
                 </div>
                 <input type="file" id="workflow-file" accept=".json" required hidden />
@@ -556,18 +556,18 @@ try {
     });
   });
 
-  // 拖拽上傳功能
+  // 拖拽上传功能
   const uploadBox = document.getElementById('workflow-upload-box');
   const fileInput = document.getElementById('workflow-file') as HTMLInputElement | null;
   const fileInfo = document.getElementById('file-info');
 
   if (uploadBox && fileInput) {
-    // 點擊上傳框觸發文件選擇
+    // 点击上传框触发文件选择
     uploadBox.addEventListener('click', () => {
       fileInput.click();
     });
 
-    // 處理文件選擇
+    // 处理文件选择
     fileInput.addEventListener('change', (event) => {
       const files = (event.target as HTMLInputElement).files;
       if (files && files.length > 0) {
@@ -575,7 +575,7 @@ try {
       }
     });
 
-    // 阻止默認的拖拽行為
+    // 阻止默认的拖拽行为
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       uploadBox.addEventListener(eventName, preventDefaults, false);
     });
@@ -585,17 +585,17 @@ try {
       e.stopPropagation();
     }
 
-    // 拖拽進入/懸停時添加視覺反饋
+    // 拖拽进入/悬停时添加视觉反馈
     ['dragenter', 'dragover'].forEach(eventName => {
       uploadBox.addEventListener(eventName, () => uploadBox.classList.add('dragover'), false);
     });
 
-    // 拖拽離開/釋放時移除視覺反饋
+    // 拖拽离开/释放时移除视觉反馈
     ['dragleave', 'drop'].forEach(eventName => {
       uploadBox.addEventListener(eventName, () => uploadBox.classList.remove('dragover'), false);
     });
 
-    // 處理拖拽釋放的文件
+    // 处理拖拽释放的文件
     uploadBox.addEventListener('drop', (event) => {
       const dt = (event as DragEvent).dataTransfer;
       if (dt) {
@@ -606,20 +606,20 @@ try {
       }
     }, false);
 
-    // 處理選中的文件
+    // 处理选中的文件
     function handleSelectedFile(file: File) {
-      // 檢查文件類型是否為 JSON
+      // 检查文件类型是否为 JSON
       if (!file.name.endsWith('.json')) {
-        alert('請選擇一個 .json 文件');
+        alert('请选择一个 .json 文件');
         return;
       }
 
-      // 顯示文件信息
+      // 显示文件信息
       if (fileInfo) {
-        fileInfo.textContent = `已選擇文件: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+        fileInfo.textContent = `已选择文件: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
       }
 
-      // 設置文件輸入的值
+      // 设置文件输入的值
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       if (fileInput) {

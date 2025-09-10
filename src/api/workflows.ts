@@ -51,7 +51,27 @@ type UserWorkflowListResponse = string[];
 type UserGenerationHistoryResponse = Record<string, any>[];
 type AllUsersGenerationHistoryResponse = Record<string, any>[];
 
-// 身分組管理相關類型定義
+
+// 授权码管理相关类型定义
+export interface CreateCodeData {
+  name?: string;
+  code?: string;
+  expires_in_seconds?: number;
+  roles?: string[];
+  groups?: string[];
+  permissions?: string[];
+}
+
+export interface CodeInfo {
+  code: string;
+  expires_at: string;
+  roles: string[];
+  groups: string[];
+  permissions: string[];
+}
+
+
+// 身份组管理相关类型定义
 export interface Group {
   id: string;
   name: string;
@@ -476,9 +496,28 @@ export async function deleteGroup(groupId: string, ctx?: ApiContext): Promise<{ 
   }) as unknown as Promise<{ message: string }>;
 }
 
-// 獲取系統所有權限列表（僅管理員）
+// 获取系统所有权限列表（仅管理员）
 export async function getSystemPermissions(ctx?: ApiContext): Promise<Permission[]> {
   return apiGet<Permission[]>('/admin/groups/permissions/list', ctx);
 }
 
-// 身分組管理API函數
+
+// 授权码管理API函数
+// 获取所有授权码列表（仅管理员）
+export async function getAllCodes(ctx?: ApiContext): Promise<CodeInfo[]> {
+  return apiGet<CodeInfo[]>('/auth/admin/codes', ctx);
+}
+
+// 创建新授权码（仅管理员）
+export async function createCode(codeData: CreateCodeData, ctx?: ApiContext): Promise<CodeInfo> {
+  return apiPost<CodeInfo>('/auth/admin/codes', codeData, ctx);
+}
+
+// 删除授权码（仅管理员）
+export async function deleteCode(code: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiFetch(`/auth/admin/codes/${code}`, {
+    method: 'DELETE',
+    ctx,
+    rawResponse: true,
+  }) as unknown as Promise<{ message: string }>;
+}
