@@ -1,0 +1,1223 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/AdminLayout.astro';
+import { requireRolesSSR } from '../../lib/auth/guard';
+import { getAllGroups, createGroup, updateGroup, deleteGroup, getSystemPermissions } from '../../api/workflows';
+
+// Guard: require admin role
+const cookieHeader = Astro.request.headers.get('cookie');
+const guard = await requireRolesSSR(Astro.request.url, cookieHeader, { any: ['admin'] });
+if (guard.response) {
+  // 403 or redirect to login
+  return guard.response;
+}
+const me = guard.me!;
+
+// Fetch all groups
+let allGroups: any[] = [];
+let groupsError: string | null = null;
+try {
+  allGroups = await getAllGroups({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+  groupsError = e?.message || 'Failed to fetch groups list';
+}
+---
+
+<Layout title="身分組管理">
+  <!-- 主内容区域 -->
+  <main class="admin-main">
+      <div class="groups-page">
+        <h1 class="page-title">身分組管理</h1>
+        <p class="page-desc">管理用戶身分組</p>
+
+        {groupsError ? (
+          <div class="error">{groupsError}</div>
+        ) : (
+          <div class="groups-container">
+            <div class="groups-header">
+              <div class="header-left">
+                <h3>身分組列表</h3>
+                <button class="btn primary" id="create-group-btn">創建身分組</button>
+              </div>
+              <div class="search-filter">
+                <div class="search-group">
+                  <input type="text" id="group-search" placeholder="搜索身分組名稱..." class="search-input" />
+                  <button class="btn secondary clear-search" id="clear-search">清除</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="groups-table-container">
+              <table class="groups-table">
+                <thead>
+                  <tr>
+                    <th>身分組名稱</th>
+                    <th>描述</th>
+                    <th>權限數量</th>
+                    <th>等級</th>
+                    <th>創建時間</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allGroups.map((group) => (
+                    <tr class="group-row" data-group-id={group.id}>
+                      <td>{group.name}</td>
+                      <td>{group.description}</td>
+                      <td>{group.permissions?.length || 0}</td>
+                      <td>{group.level}</td>
+                      <td>{new Date(group.created_at).toLocaleDateString('zh-CN')}</td>
+                      <td>
+                        <div class="action-buttons">
+                          <button class="btn secondary edit-group-btn" data-group-id={group.id} data-group-name={group.name}>編輯</button>
+                          <button class="btn danger delete-group-btn" data-group-id={group.id} data-group-name={group.name}>刪除</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+  </main>
+</Layout>
+
+<!-- 创建身分組模态框 -->
+<div id="create-group-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>創建新身分組</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="create-group-form">
+        <div class="form-group">
+          <label for="new-group-id">身分組ID *</label>
+          <input type="text" id="new-group-id" required />
+        </div>
+        <div class="form-group">
+          <label for="new-group-name">身分組名稱 *</label>
+          <input type="text" id="new-group-name" required />
+        </div>
+        <div class="form-group">
+          <label for="new-group-description">描述</label>
+          <textarea id="new-group-description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="new-group-level">等級</label>
+          <input type="number" id="new-group-level" value="50" min="1" max="100" />
+        </div>
+        <div class="form-group">
+          <label>權限</label>
+          <div id="permissions-checkboxes">
+            <!-- 權限複選框將通過JavaScript動態生成 -->
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" id="cancel-create">取消</button>
+      <button class="btn primary" id="confirm-create">創建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 編輯身分組模态框 -->
+<div id="edit-group-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>編輯身分組</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="edit-group-form">
+        <input type="hidden" id="edit-group-id" />
+        <div class="form-group">
+          <label for="edit-group-name">身分組名稱 *</label>
+          <input type="text" id="edit-group-name" required />
+        </div>
+        <div class="form-group">
+          <label for="edit-group-description">描述</label>
+          <textarea id="edit-group-description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="edit-group-level">等級</label>
+          <input type="number" id="edit-group-level" min="1" max="100" />
+        </div>
+        <div class="form-group">
+          <label>權限</label>
+          <div id="edit-permissions-checkboxes">
+            <!-- 權限複選框將通過JavaScript動態生成 -->
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" id="cancel-edit">取消</button>
+      <button class="btn primary" id="confirm-edit">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 删除身分組模态框 -->
+<div id="delete-group-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>删除身分組</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="delete-group-message"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" id="cancel-delete">取消</button>
+      <button class="btn danger" id="confirm-delete">删除</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Toast 通知样式 - 绝对定位到浏览器右上角 */
+  .toast {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    bottom: auto !important;
+    transform: translateY(-20px) scale(0.95) !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: var(--text-primary) !important;
+    padding: 16px 20px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 8px 25px var(--shadow-light) !important;
+    z-index: 999999 !important;
+    max-width: 320px !important;
+    word-wrap: break-word !important;
+    opacity: 0 !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+  }
+
+  .toast.show {
+    /* 覆盖基础样式中的 !important，确保能从透明/位移过渡到可见 */
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+  }
+
+  /* Stacking container for multiple toasts */
+  .toast-container {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 12px !important;
+    pointer-events: none !important; /* clicks pass through except on toasts */
+  }
+
+  /* When toasts are in the container, remove fixed positioning to allow stacking flow */
+  .toast-container .toast {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Hide non-visible toasts so they don't occupy space */
+  .toast-container .toast:not(.show) {
+    position: absolute !important;
+    visibility: hidden !important;
+  }
+
+  .toast-success {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: rgba(76, 175, 80, 0.3);
+    color: #4caf50;
+  }
+
+  .toast-error {
+    background: rgba(244, 67, 54, 0.1);
+    border-color: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+  }
+
+  .toast-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border-color: rgba(255, 152, 0, 0.3);
+    color: #ff9800;
+  }
+
+  .toast-info {
+    background: rgba(3, 150, 243, 0.1);
+    border-color: rgba(33, 150, 243, 0.3);
+    color: #2196f3;
+  }
+
+  .toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toast-icon svg {
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .toast-message {
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .toast-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    margin: -4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .toast-close:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transform: scale(1.1);
+  }
+
+  /* Mobile responsiveness for toast */
+  @media (max-width: 768px) {
+    .toast {
+      top: 16px;
+      right: 16px;
+      left: 16px;
+      max-width: none;
+      padding: 14px 16px;
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .toast {
+      top: 12px;
+      right: 12px;
+      left: 12px;
+      padding: 12px 14px;
+    }
+  }
+
+  /* Touch device specific styles for toast */
+  @media (hover: none) and (pointer: coarse) {
+    .toast-close {
+      min-width: 32px;
+      min-height: 32px;
+    }
+
+    .toast-close:active {
+      transform: scale(0.95);
+    }
+  }
+
+  .groups-page {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .page-desc {
+    color: var(--text-secondary);
+    margin: 0 0 32px 0;
+    font-size: 16px;
+  }
+
+  .groups-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .groups-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .groups-header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-primary);
+  }
+
+  .search-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 300px;
+ }
+
+  .search-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .clear-search {
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  .groups-table-container {
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+  }
+
+  .groups-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-primary);
+  }
+
+  .groups-table th,
+  .groups-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .groups-table th {
+    background: var(--bg-secondary);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .groups-table tr:hover {
+    background: var(--bg-secondary);
+  }
+
+
+  .btn {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    background: var(--accent-color);
+    color: #fff;
+    border: 1px solid var(--accent-color);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn.secondary {
+    background: transparent;
+    color: var(--accent-color);
+  }
+
+  .btn:hover {
+    opacity: 0.9;
+  }
+
+  .error {
+    color: #c62828;
+    background: #fee;
+    border: 1px solid #f44336;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .groups-header {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .search-filter {
+      width: 100%;
+    }
+
+    .search-group {
+      width: 100%;
+    }
+
+    .groups-table-container {
+      overflow-x: auto;
+    }
+
+    .groups-table {
+      min-width: 600px;
+    }
+
+    .groups-table th,
+    .groups-table td {
+      padding: 8px 6px;
+      font-size: 0.85rem;
+    }
+
+    .modal-content {
+      margin: 20px;
+      max-width: none;
+      width: calc(100% - 40px);
+      max-width: 40px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+      padding: 16px 20px;
+    }
+
+    .modal-footer {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .modal-footer .btn {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .admin-main {
+      padding: 16px 12px;
+    }
+
+    .page-title {
+      font-size: 24px;
+    }
+
+    .groups-container {
+      padding: 16px;
+    }
+
+    .search-group {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .search-input {
+      width: 100%;
+    }
+
+    .modal-content {
+      margin: 10px;
+      width: calc(10% - 20px);
+      max-width: 350px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+      padding: 12px 16px;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+    }
+
+    .modal-body input,
+    .modal-body select {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+
+    .modal-footer .btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      min-width: 60px;
+    }
+    }
+  
+    /* 操作按钮样式 */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+  
+    .action-buttons .btn {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+  
+    .btn.warning {
+      background: #ffc107;
+      color: #212529;
+      border-color: #ffc107;
+    }
+  
+    .btn.warning:hover {
+      background: #e0a800;
+    }
+  
+    /* 模态框样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+  
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      max-width: 450px;
+      width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+  
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+  
+    .modal-header h3 {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.3;
+    }
+  
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 4px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: background-color 0.2s ease;
+    }
+  
+    .modal-close:hover {
+      background-color: var(--bg-secondary);
+    }
+  
+    .modal-body {
+      padding: 20px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+  
+    .modal-body p {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      margin: 0 0 16px 0;
+      line-height: 1.5;
+    }
+  
+    .modal-body .form-group {
+      margin-bottom: 16px;
+    }
+  
+    .modal-body .form-group:last-child {
+      margin-bottom: 0;
+    }
+  
+    .modal-body label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+  
+    .modal-body input,
+    .modal-body select,
+    .modal-body textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+      min-width: 0; /* 防止flex子项超出容器 */
+      word-wrap: break-word;
+    }
+  
+    .modal-body input[type="password"],
+    .modal-body input[type="email"],
+    .modal-body input[type="text"],
+    .modal-body textarea {
+      max-width: 100%;
+    }
+  
+    .modal-body input:focus,
+    .modal-body select:focus,
+    .modal-body textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+  
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+    }
+  
+    .modal-footer .btn {
+      min-width: 70px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* 權限複選框樣式 */
+    .permission-checkbox {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .permission-checkbox input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+    }
+  </style>
+
+ <style is:global>
+    /* Global Toast baseline styles for dynamic toasts on this page */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--glass-bg, rgba(255, 255, 255, 0.85));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--text-primary, #111);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color, rgba(0,0,0,0.1));
+      box-shadow: 0 8px 25px var(--shadow-light, rgba(0,0,0,0.12));
+      z-index: 999999;
+      max-width: 320px;
+      word-wrap: break-word;
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .toast-success { background: rgba(76, 175, 80, 0.1); border-color: rgba(76,175,80,0.3); color: #4caf50; }
+    .toast-error { background: rgba(244, 67, 54, 0.1); border-color: rgba(244, 67, 54, 0.3); color: #f44336; }
+    .toast-warning { background: rgba(255, 152, 0, 0.1); border-color: rgba(255,152,0,0.3); color: #ff9800; }
+    .toast-info { background: rgba(33,150,243,0.1); border-color: rgba(33,150,243,0.3); color: #2196f3; }
+
+    .toast-icon { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .toast-icon svg { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .toast-message { flex: 1; line-height: 1.4; }
+
+    .toast-close {
+      background: none; border: none; color: var(--text-secondary, #666);
+      font-size: 20px; cursor: pointer; padding: 4px; margin: -4px;
+      border-radius: 50%; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; flex-shrink: 0;
+    }
+    .toast-close:hover { background: var(--bg-secondary, rgba(0,0,0,0.04)); color: var(--text-primary, #111); transform: scale(1.1); }
+
+    /* Stacking container (global) */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 999999;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .toast-container .toast {
+      position: relative;
+      top: auto;
+      right: auto;
+      left: auto;
+      bottom: auto;
+      margin: 0;
+      pointer-events: auto;
+    }
+    .toast-container .toast:not(.show) {
+      position: absolute;
+      visibility: hidden;
+    }
+  </style>
+
+<script>
+  // Import the required functions
+  // 已在文件頂部導入API函數
+  import { createGroup, updateGroup, deleteGroup, getSystemPermissions, getGroup } from '../../api/workflows';
+  
+  // 獲取cookie header
+  const cookieHeader = document.cookie;
+
+  // 辅助函数 - 使用 Toast 组件进行通知（支持堆叠）
+  function ensureToastContainer(): HTMLElement {
+    let el = document.getElementById('toast-container') as HTMLElement | null;
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toast-container';
+      el.className = 'toast-container';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', duration: number = 3000) {
+    // 创建 toast 元素
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <div class="toast-icon">
+        ${type === 'success' ? `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        ` : type === 'error' ? `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        ` : type === 'warning' ? `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        ` : `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `}
+      </div>
+      <span class="toast-message">${message}</span>
+      <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+    `;
+
+    // 追加到堆叠容器
+    const container = ensureToastContainer();
+    container.appendChild(toast);
+
+    // 显示动画
+    window.setTimeout(() => toast.classList.add('show'), 10);
+
+    // 自动关闭
+    window.setTimeout(() => {
+      toast.classList.remove('show');
+      window.setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 400);
+    }, duration);
+  }
+
+  // 身分組管理功能
+  // 身分組搜索和过滤
+  const groupSearchInput = document.getElementById('group-search') as HTMLInputElement;
+  const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
+
+  function filterGroups() {
+    const searchTerm = groupSearchInput?.value.toLowerCase().trim() || '';
+
+    const groupRows = document.querySelectorAll('.group-row');
+    let visibleCount = 0;
+
+    groupRows.forEach(row => {
+      const groupName = row.querySelector('td:first-child')?.textContent?.toLowerCase() || '';
+
+      const matchesSearch = !searchTerm ||
+        groupName.includes(searchTerm);
+
+      if (matchesSearch) {
+        (row as HTMLElement).style.display = '';
+        visibleCount++;
+      } else {
+        (row as HTMLElement).style.display = 'none';
+      }
+    });
+
+    // 显示过滤结果统计
+    updateFilterStats(visibleCount, groupRows.length);
+  }
+
+  function updateFilterStats(visible: number, total: number) {
+    // 可以在这里添加显示过滤统计的代码
+    console.log(`显示 ${visible} / ${total} 个身分組`);
+  }
+
+  function clearSearch() {
+    groupSearchInput.value = '';
+    filterGroups();
+  }
+
+  // 事件监听器
+  groupSearchInput?.addEventListener('input', filterGroups);
+  clearSearchBtn?.addEventListener('click', clearSearch);
+
+  // 防抖搜索
+  let searchTimeout: number;
+  groupSearchInput?.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = window.setTimeout(filterGroups, 300);
+  });
+
+  // 创建身分組功能
+  const createGroupBtn = document.getElementById('create-group-btn') as HTMLButtonElement;
+  const createGroupModal = document.getElementById('create-group-modal') as HTMLDivElement;
+  const createGroupForm = document.getElementById('create-group-form') as HTMLFormElement;
+  const cancelCreateBtn = document.getElementById('cancel-create') as HTMLButtonElement;
+  const confirmCreateBtn = document.getElementById('confirm-create') as HTMLButtonElement;
+
+  function showCreateGroupModal() {
+    if (createGroupForm) createGroupForm.reset();
+    if (createGroupModal) createGroupModal.classList.add('show');
+    
+    // 獲取系統權限列表並生成複選框
+    generatePermissionCheckboxes('permissions-checkboxes');
+  }
+
+  function hideCreateGroupModal() {
+    if (createGroupModal) createGroupModal.classList.remove('show');
+  }
+
+  createGroupBtn?.addEventListener('click', showCreateGroupModal);
+  cancelCreateBtn?.addEventListener('click', hideCreateGroupModal);
+
+  createGroupModal?.querySelector('.modal-close')?.addEventListener('click', hideCreateGroupModal);
+
+  // 点击模态框外部关闭
+  createGroupModal?.addEventListener('click', (e) => {
+    if (e.target === createGroupModal) {
+      hideCreateGroupModal();
+    }
+  });
+
+  confirmCreateBtn?.addEventListener('click', async () => {
+    const groupId = (document.getElementById('new-group-id') as HTMLInputElement)?.value.trim();
+    const groupName = (document.getElementById('new-group-name') as HTMLInputElement)?.value.trim();
+    const groupDescription = (document.getElementById('new-group-description') as HTMLTextAreaElement)?.value.trim();
+    const groupLevel = parseInt((document.getElementById('new-group-level') as HTMLInputElement)?.value) || 50;
+    
+    // 獲取選中的權限
+    const selectedPermissions = Array.from(
+      document.querySelectorAll('#permissions-checkboxes input[type="checkbox"]:checked')
+    ).map(cb => (cb as HTMLInputElement).value);
+
+    if (!groupId || !groupName) {
+      showToast('身分組ID和名稱不能為空', 'error');
+      return;
+    }
+
+    try {
+      const result = await createGroup({
+        id: groupId,
+        name: groupName,
+        description: groupDescription,
+        permissions: selectedPermissions,
+        level: groupLevel
+      });
+
+      showToast('身分組創建成功', 'success');
+      hideCreateGroupModal();
+
+      // 刷新页面以显示新身分組
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '創建身分組失敗';
+      showToast(`創建失敗: ${errorMessage}`, 'error');
+    }
+  });
+
+  // 删除身分組功能
+  document.querySelectorAll('.delete-group-btn').forEach(button => {
+    button.addEventListener('click', async function(this: HTMLButtonElement) {
+      const groupId = this.getAttribute('data-group-id');
+      const groupName = this.getAttribute('data-group-name');
+
+      if (!groupId || !groupName) return;
+
+      // 更新删除模态框的内容
+      const deleteMessage = document.getElementById('delete-group-message');
+      if (deleteMessage) {
+        deleteMessage.textContent = `確定要删除身分組 "${groupName}" 嗎？此操作不可撤銷。`;
+      }
+
+      const deleteModal = document.getElementById('delete-group-modal');
+      deleteModal?.classList.add('show');
+
+      // 设置确认删除按钮的事件
+      const confirmDeleteBtn = document.getElementById('confirm-delete');
+      const cancelDeleteBtn = document.getElementById('cancel-delete');
+
+      const handleConfirm = async () => {
+        try {
+          await deleteGroup(groupId);
+          showToast('身分組删除成功', 'success');
+          deleteModal?.classList.remove('show');
+
+          // 从表格中移除身分組行
+          const groupRow = document.querySelector(`.group-row[data-group-id="${groupId}"]`);
+          groupRow?.remove();
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : '删除身分組失敗';
+          showToast(`删除失敗: ${errorMessage}`, 'error');
+        }
+      };
+
+      const handleCancel = () => {
+        deleteModal?.classList.remove('show');
+      };
+
+      // 移除之前的事件监听器
+      confirmDeleteBtn?.removeEventListener('click', handleConfirm);
+      cancelDeleteBtn?.removeEventListener('click', handleCancel);
+
+      // 添加新的事件监听器
+      confirmDeleteBtn?.addEventListener('click', handleConfirm);
+      cancelDeleteBtn?.addEventListener('click', handleCancel);
+
+      // 关闭按钮
+      deleteModal?.querySelector('.modal-close')?.addEventListener('click', handleCancel);
+
+      // 点击模态框外部关闭
+      deleteModal?.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+          handleCancel();
+        }
+      });
+    });
+  });
+
+  // 編輯身分組功能
+  document.querySelectorAll('.edit-group-btn').forEach(button => {
+    button.addEventListener('click', async function(this: HTMLButtonElement) {
+      const groupId = this.getAttribute('data-group-id');
+      const groupName = this.getAttribute('data-group-name');
+
+      if (!groupId || !groupName) return;
+
+      // 獲取身分組詳細信息
+      try {
+        const groupData = await getGroup(groupId);
+        
+        if (!groupData) {
+          showToast('身分組信息未找到', 'error');
+          return;
+        }
+        
+        // 填充表單
+        (document.getElementById('edit-group-id') as HTMLInputElement).value = groupData.id;
+        (document.getElementById('edit-group-name') as HTMLInputElement).value = groupData.name;
+        (document.getElementById('edit-group-description') as HTMLTextAreaElement).value = groupData.description;
+        (document.getElementById('edit-group-level') as HTMLInputElement).value = groupData.level.toString();
+        
+        // 生成權限複選框並選中相應的項目
+        generatePermissionCheckboxes('edit-permissions-checkboxes', groupData.permissions);
+        
+        // 顯示模態框
+        const editModal = document.getElementById('edit-group-modal');
+        editModal?.classList.add('show');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : '獲取身分組信息失敗';
+        showToast(`獲取信息失敗: ${errorMessage}`, 'error');
+      }
+    });
+  });
+
+  // 編輯身分組確認按鈕
+  const confirmEditBtn = document.getElementById('confirm-edit') as HTMLButtonElement;
+  const cancelEditBtn = document.getElementById('cancel-edit') as HTMLButtonElement;
+  const editGroupModal = document.getElementById('edit-group-modal') as HTMLDivElement;
+
+  cancelEditBtn?.addEventListener('click', () => {
+    editGroupModal?.classList.remove('show');
+  });
+
+  editGroupModal?.querySelector('.modal-close')?.addEventListener('click', () => {
+    editGroupModal?.classList.remove('show');
+  });
+
+  editGroupModal?.addEventListener('click', (e) => {
+    if (e.target === editGroupModal) {
+      editGroupModal?.classList.remove('show');
+    }
+  });
+
+  confirmEditBtn?.addEventListener('click', async () => {
+    const groupId = (document.getElementById('edit-group-id') as HTMLInputElement)?.value;
+    const groupName = (document.getElementById('edit-group-name') as HTMLInputElement)?.value.trim();
+    const groupDescription = (document.getElementById('edit-group-description') as HTMLTextAreaElement)?.value.trim();
+    const groupLevel = parseInt((document.getElementById('edit-group-level') as HTMLInputElement)?.value) || 50;
+    
+    // 獲取選中的權限
+    const selectedPermissions = Array.from(
+      document.querySelectorAll('#edit-permissions-checkboxes input[type="checkbox"]:checked')
+    ).map(cb => (cb as HTMLInputElement).value);
+
+    if (!groupId || !groupName) {
+      showToast('身分組名稱不能為空', 'error');
+      return;
+    }
+
+    try {
+      await updateGroup(groupId, {
+        name: groupName,
+        description: groupDescription,
+        permissions: selectedPermissions,
+        level: groupLevel
+      });
+
+      showToast('身分組更新成功', 'success');
+      editGroupModal?.classList.remove('show');
+
+      // 刷新页面以显示更新
+      setTimeout(() => {
+        location.reload();
+      }, 1000);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '更新身分組失敗';
+      showToast(`更新失敗: ${errorMessage}`, 'error');
+    }
+  });
+
+  // 生成權限複選框的函數
+  async function generatePermissionCheckboxes(containerId: string, selectedPermissions: string[] = []) {
+    try {
+      // 獲取系統權限列表
+      const permissions = await getSystemPermissions();
+      
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      // 清空容器
+      container.innerHTML = '';
+      
+      // 生成複選框
+      permissions.forEach((permission: { id: string; name: string }) => {
+        const div = document.createElement('div');
+        div.className = 'permission-checkbox';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `permission-${permission.id}`;
+        checkbox.value = permission.id;
+        checkbox.checked = selectedPermissions.includes(permission.id);
+        
+        const label = document.createElement('label');
+        label.htmlFor = `permission-${permission.id}`;
+        label.textContent = `${permission.name} (${permission.id})`;
+        
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        container.appendChild(div);
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : '獲取權限列表失敗';
+      showToast(`獲取權限列表失敗: ${errorMessage}`, 'error');
+    }
+  }
+</script>

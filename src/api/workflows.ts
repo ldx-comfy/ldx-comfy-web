@@ -51,6 +51,36 @@ type UserWorkflowListResponse = string[];
 type UserGenerationHistoryResponse = Record<string, any>[];
 type AllUsersGenerationHistoryResponse = Record<string, any>[];
 
+// 身分組管理相關類型定義
+export interface Group {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  level: number;
+  created_at: string;
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+}
+
+export interface CreateGroupData {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  level: number;
+}
+
+export interface UpdateGroupData {
+  name?: string;
+  description?: string;
+  permissions?: string[];
+  level?: number;
+}
+
 // Helpers
 function ensureOk(resp: Response): Response {
   if (!resp.ok) {
@@ -364,3 +394,42 @@ export async function deleteUser(userId: string, ctx?: ApiContext): Promise<{ me
 export async function resetUserPassword(userId: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
   return apiPost<{ message: string }>(`/admin/users/${userId}/reset-password`, { new_password: newPassword }, ctx);
 }
+
+// 身分組管理API函數
+
+// 身分組管理API函數
+// 獲取所有身分組列表（僅管理員）
+export async function getAllGroups(ctx?: ApiContext): Promise<Group[]> {
+  return apiGet<Group[]>('/admin/groups', ctx);
+}
+
+// 獲取指定身分組信息（僅管理員）
+export async function getGroup(groupId: string, ctx?: ApiContext): Promise<Group> {
+  return apiGet<Group>(`/admin/groups/${groupId}`, ctx);
+}
+
+// 創建新身分組（僅管理員）
+export async function createGroup(groupData: CreateGroupData, ctx?: ApiContext): Promise<Group> {
+  return apiPost<Group>('/admin/groups', groupData, ctx);
+}
+
+// 更新身分組（僅管理員）
+export async function updateGroup(groupId: string, groupData: UpdateGroupData, ctx?: ApiContext): Promise<Group> {
+  return apiPost<Group>(`/admin/groups/${groupId}`, groupData, ctx);
+}
+
+// 刪除身分組（僅管理員）
+export async function deleteGroup(groupId: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiFetch(`/admin/groups/${groupId}`, {
+    method: 'DELETE',
+    ctx,
+    rawResponse: true,
+  }) as unknown as Promise<{ message: string }>;
+}
+
+// 獲取系統所有權限列表（僅管理員）
+export async function getSystemPermissions(ctx?: ApiContext): Promise<Permission[]> {
+  return apiGet<Permission[]>('/admin/groups/permissions/list', ctx);
+}
+
+// 身分組管理API函數
