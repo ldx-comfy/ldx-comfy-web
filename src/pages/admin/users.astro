@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from '../../layouts/AdminLayout.astro';
 import { requireRolesSSR } from '../../lib/auth/guard';
-import { getAllUsers, updateUserRole, updateUserStatus } from '../../api/workflows';
+import { getAllUsers } from '../../api/workflows';
 
 // Guard: require admin role
 const cookieHeader = Astro.request.headers.get('cookie');
@@ -29,7 +29,7 @@ try {
   <main class="admin-main">
       <div class="users-page">
         <h1 class="page-title">用户管理</h1>
-        <p class="page-desc">管理用户账户、角色和权限设置</p>
+        <p class="page-desc">管理用户账户</p>
 
         {usersError ? (
           <div class="error">{usersError}</div>
@@ -46,18 +46,6 @@ try {
                   <button class="btn secondary clear-search" id="clear-search">清除</button>
                 </div>
                 <div class="filter-group">
-                  <select id="role-filter" class="filter-select">
-                    <option value="">所有角色</option>
-                    <option value="admin">管理员</option>
-                    <option value="moderator">版主</option>
-                    <option value="user">普通用户</option>
-                  </select>
-                  <select id="status-filter" class="filter-select">
-                    <option value="">所有状态</option>
-                    <option value="active">活跃</option>
-                    <option value="inactive">未激活</option>
-                    <option value="banned">封禁</option>
-                  </select>
                   <select id="sort-by" class="filter-select">
                     <option value="username">按用户名排序</option>
                     <option value="created_at">按注册时间</option>
@@ -74,8 +62,6 @@ try {
                   <tr>
                     <th>用户名</th>
                     <th>邮箱</th>
-                    <th>角色</th>
-                    <th>状态</th>
                     <th>注册时间</th>
                     <th>最后登录</th>
                     <th>生成次数</th>
@@ -87,26 +73,11 @@ try {
                     <tr class="user-row" data-user-id={user.id}>
                       <td>{user.username}</td>
                       <td>{user.email}</td>
-                      <td>
-                        <select class="role-select" data-user-id={user.id} value={user.role}>
-                          <option value="admin">管理员</option>
-                          <option value="moderator">版主</option>
-                          <option value="user">普通用户</option>
-                        </select>
-                      </td>
-                      <td>
-                        <select class="status-select" data-user-id={user.id} value={user.status}>
-                          <option value="active">活跃</option>
-                          <option value="inactive">未激活</option>
-                          <option value="banned">封禁</option>
-                        </select>
-                      </td>
                       <td>{new Date(user.created_at).toLocaleDateString('zh-CN')}</td>
                       <td>{new Date(user.last_login).toLocaleDateString('zh-CN')}</td>
                       <td>{user.generation_count}</td>
                       <td>
                         <div class="action-buttons">
-                          <button class="btn secondary save-user-btn" data-user-id={user.id}>保存</button>
                           <button class="btn warning reset-password-btn" data-user-id={user.id} data-username={user.username}>重置密码</button>
                           <button class="btn danger delete-user-btn" data-user-id={user.id} data-username={user.username}>删除</button>
                         </div>
@@ -500,14 +471,6 @@ try {
     background: var(--bg-secondary);
   }
 
-  .role-select,
-  .status-select {
-    padding: 4px 8px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-  }
 
   .btn {
     display: inline-block;
@@ -902,7 +865,7 @@ try {
 
 <script>
   // Import the required functions
-  import { updateUserRole, updateUserStatus, createUser, deleteUser, resetUserPassword } from '../../api/workflows';
+  import { createUser, deleteUser, resetUserPassword } from '../../api/workflows';
 
   // 辅助函数 - 使用 Toast 组件进行通知（支持堆叠）
   function ensureToastContainer(): HTMLElement {
@@ -965,15 +928,11 @@ try {
   // 用户管理功能
   // 用户搜索和过滤
   const userSearchInput = document.getElementById('user-search') as HTMLInputElement;
-  const roleFilterSelect = document.getElementById('role-filter') as HTMLSelectElement;
-  const statusFilterSelect = document.getElementById('status-filter') as HTMLSelectElement;
   const sortBySelect = document.getElementById('sort-by') as HTMLSelectElement;
   const clearSearchBtn = document.getElementById('clear-search') as HTMLButtonElement;
 
   function filterUsers() {
     const searchTerm = userSearchInput?.value.toLowerCase().trim() || '';
-    const roleFilter = roleFilterSelect?.value || '';
-    const statusFilter = statusFilterSelect?.value || '';
 
     const userRows = document.querySelectorAll('.user-row');
     let visibleCount = 0;
@@ -981,16 +940,12 @@ try {
     userRows.forEach(row => {
       const username = row.querySelector('td:first-child')?.textContent?.toLowerCase() || '';
       const email = row.querySelector('td:nth-child(2)')?.textContent?.toLowerCase() || '';
-      const role = (row.querySelector('.role-select') as HTMLSelectElement)?.value || '';
-      const status = (row.querySelector('.status-select') as HTMLSelectElement)?.value || '';
 
       const matchesSearch = !searchTerm ||
         username.includes(searchTerm) ||
         email.includes(searchTerm);
-      const matchesRole = !roleFilter || role === roleFilter;
-      const matchesStatus = !statusFilter || status === statusFilter;
 
-      if (matchesSearch && matchesRole && matchesStatus) {
+      if (matchesSearch) {
         (row as HTMLElement).style.display = '';
         visibleCount++;
       } else {
@@ -1053,15 +1008,11 @@ try {
 
   function clearSearch() {
     userSearchInput.value = '';
-    roleFilterSelect.value = '';
-    statusFilterSelect.value = '';
     filterUsers();
   }
 
   // 事件监听器
   userSearchInput?.addEventListener('input', filterUsers);
-  roleFilterSelect?.addEventListener('change', filterUsers);
-  statusFilterSelect?.addEventListener('change', filterUsers);
   sortBySelect?.addEventListener('change', sortUsers);
   clearSearchBtn?.addEventListener('click', clearSearch);
 
@@ -1072,71 +1023,7 @@ try {
     searchTimeout = window.setTimeout(filterUsers, 300);
   });
 
-  // 用户角色和状态更新
-  document.querySelectorAll('.save-user-btn').forEach(button => {
-    button.addEventListener('click', async function(this: HTMLButtonElement) {
-      const userId = this.getAttribute('data-user-id');
-      const userRow = this.closest('.user-row');
-      const roleSelect = userRow?.querySelector('.role-select') as HTMLSelectElement;
-      const statusSelect = userRow?.querySelector('.status-select') as HTMLSelectElement;
-
-      if (!userId || !roleSelect || !statusSelect) return;
-
-      const originalRole = roleSelect.getAttribute('data-original-value') || roleSelect.value;
-      const originalStatus = statusSelect.getAttribute('data-original-value') || statusSelect.value;
-      const newRole = roleSelect.value;
-      const newStatus = statusSelect.value;
-
-      // 检查是否有变化
-      if (originalRole === newRole && originalStatus === newStatus) {
-        alert('没有检测到变化');
-        return;
-      }
-
-      // 权限检查 - 防止用户给自己降级
-      if (userId === '1' && (newRole !== 'admin' || newStatus !== 'active')) {
-        alert('警告：不能修改超级管理员的权限！');
-        // 恢复原始值
-        roleSelect.value = originalRole;
-        statusSelect.value = originalStatus;
-        return;
-      }
-
-      // 敏感操作二次确认
-      let confirmMessage = `确定要更新用户 "${userId}" 的信息吗？\n\n`;
-      if (originalRole !== newRole) {
-        confirmMessage += `角色: ${originalRole} → ${newRole}\n`;
-      }
-      if (originalStatus !== newStatus) {
-        confirmMessage += `状态: ${originalStatus} → ${newStatus}\n`;
-      }
-
-      if (!confirm(confirmMessage)) {
-        return;
-      }
-
-      try {
-        // 更新角色
-        if (originalRole !== newRole) {
-          await updateUserRole(userId, newRole);
-        }
-        // 更新状态
-        if (originalStatus !== newStatus) {
-          await updateUserStatus(userId, newStatus);
-        }
-
-        // 更新原始值
-        roleSelect.setAttribute('data-original-value', newRole);
-        statusSelect.setAttribute('data-original-value', newStatus);
-
-        // 显示成功消息
-        showToast('用户更新成功', 'success');
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : '更新失败';
-        showToast(`更新失败: ${errorMessage}`, 'error');
-      }
-    });
-  });
+  // 创建用户功能
 
   // 创建用户功能
   const createUserBtn = document.getElementById('create-user-btn') as HTMLButtonElement;
