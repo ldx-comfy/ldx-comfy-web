@@ -275,6 +275,7 @@ export interface User {
   username: string;
   email: string;
   role: 'admin' | 'user' | 'moderator';
+  groups: string[];
   status: 'active' | 'inactive' | 'banned';
   created_at: string;
   last_login: string;
@@ -390,9 +391,36 @@ export async function deleteUser(userId: string, ctx?: ApiContext): Promise<{ me
   }) as unknown as Promise<{ message: string }>;
 }
 
+// 获取用户信息
+export async function getUserInfo(userId: string, ctx?: ApiContext): Promise<User> {
+  // 由于后端没有提供单独获取用户信息的API，我们通过获取所有用户然后过滤来实现
+  const users = await getAllUsers(ctx);
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    throw new Error(`用户 ${userId} 不存在`);
+  }
+  return user;
+}
+
 // 重置用户密码
 export async function resetUserPassword(userId: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
   return apiPost<{ message: string }>(`/admin/users/${userId}/reset-password`, { new_password: newPassword }, ctx);
+}
+
+// 获取用户详细信息
+export async function getUserDetails(userId: string, ctx?: ApiContext): Promise<User> {
+  // 由于后端没有提供单独获取用户详细信息的API，我们通过获取所有用户然后过滤来实现
+  const users = await getAllUsers(ctx);
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    throw new Error(`用户 ${userId} 不存在`);
+  }
+  return user;
+}
+
+// 更新用户身分組
+export async function updateUserGroups(userId: string, groups: string[], ctx?: ApiContext): Promise<{ message: string }> {
+  return apiPost<{ message: string }>(`/admin/users/${userId}/groups`, { groups }, ctx);
 }
 
 // 身分組管理API函數

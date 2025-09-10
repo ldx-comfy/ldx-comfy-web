@@ -3,7 +3,7 @@ export const prerender = false;
 
 import Layout from '../../layouts/AdminLayout.astro';
 import { requireRolesSSR } from '../../lib/auth/guard';
-import { getAllUsers } from '../../api/workflows';
+import { getAllUsers, getAllGroups, getUserDetails } from '../../api/workflows';
 
 // Guard: require admin role
 const cookieHeader = Astro.request.headers.get('cookie');
@@ -21,6 +21,15 @@ try {
   allUsers = await getAllUsers({ cookies: cookieHeader || undefined });
 } catch (e: any) {
   usersError = e?.message || 'Failed to fetch users list';
+}
+
+// Fetch all groups
+let allGroups: any[] = [];
+let groupsError: string | null = null;
+try {
+  allGroups = await getAllGroups({ cookies: cookieHeader || undefined });
+} catch (e: any) {
+  groupsError = e?.message || 'Failed to fetch groups list';
 }
 ---
 
@@ -78,6 +87,7 @@ try {
                       <td>{user.generation_count}</td>
                       <td>
                         <div class="action-buttons">
+                          <button class="btn secondary edit-groups-btn" data-user-id={user.id} data-username={user.username}>编辑身分組</button>
                           <button class="btn warning reset-password-btn" data-user-id={user.id} data-username={user.username}>重置密码</button>
                           <button class="btn danger delete-user-btn" data-user-id={user.id} data-username={user.username}>删除</button>
                         </div>
@@ -90,7 +100,7 @@ try {
           </div>
         )}
       </div>
-  </main>
+ </main>
 </Layout>
 
 <!-- 创建用户模态框 -->
@@ -122,6 +132,17 @@ try {
             <option value="admin">管理员</option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="new-groups">身分組</label>
+          <div id="groups-checkboxes">
+            {allGroups.map((group) => (
+              <div class="group-checkbox">
+                <input type="checkbox" id={`group-${group.id}`} value={group.id} />
+                <label for={`group-${group.id}`}>{group.name}</label>
+              </div>
+            ))}
+          </div>
+        </div>
       </form>
     </div>
     <div class="modal-footer">
@@ -148,6 +169,34 @@ try {
     <div class="modal-footer">
       <button class="btn secondary" id="cancel-reset">取消</button>
       <button class="btn primary" id="confirm-reset">重置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑用户身分組模态框 -->
+<div id="edit-groups-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>编辑用户身分組</h3>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="edit-groups-message"></p>
+      <div class="form-group">
+        <label>身分組</label>
+        <div id="edit-groups-checkboxes">
+          {allGroups.map((group) => (
+            <div class="group-checkbox">
+              <input type="checkbox" id={`edit-group-${group.id}`} value={group.id} />
+              <label for={`edit-group-${group.id}`}>{group.name}</label>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn secondary" id="cancel-edit-groups">取消</button>
+      <button class="btn primary" id="confirm-edit-groups">保存</button>
     </div>
   </div>
 </div>
@@ -186,7 +235,7 @@ try {
     border-radius: 12px !important;
     border: 1px solid var(--border-color) !important;
     box-shadow: 0 8px 25px var(--shadow-light) !important;
-    z-index: 999999 !important;
+    z-index: 999 !important;
     max-width: 320px !important;
     word-wrap: break-word !important;
     opacity: 0 !important;
@@ -210,23 +259,38 @@ try {
     position: fixed !important;
     top: 20px !important;
     right: 20px !important;
-    z-index: 999999 !important;
+    z-index: 10 !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-end !important;
     gap: 12px !important;
-    pointer-events: none !important; /* clicks pass through except on toasts */
+    /* 移除 pointer-events: none !important; */
+    /* 讓整個容器可以接收事件，如果子元素需要阻止可以單獨設置 */
   }
 
   /* When toasts are in the container, remove fixed positioning to allow stacking flow */
+  /* 确保 toast 容器本身是可点击的，但其内部的 toast 元素是可点击的，并且不干扰下面的元素 */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    /* 移除 pointer-events: none; 以允許其下方的元素被點擊 */
+    /* 但是為了讓 toast 堆疊正常，且不阻擋後方的元素，可以設為 auto */
+  }
+
   .toast-container .toast {
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    left: auto !important;
-    bottom: auto !important;
-    margin: 0 !important;
-    pointer-events: auto !important;
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    bottom: auto;
+    margin: 0;
+    pointer-events: auto; /* 确保 toast 元素本身是可交互的 */
   }
 
   /* Hide non-visible toasts so they don't occupy space */
@@ -254,7 +318,7 @@ try {
   }
 
   .toast-info {
-    background: rgba(33, 150, 243, 0.1);
+    background: rgba(3, 150, 243, 0.1);
     border-color: rgba(33, 150, 243, 0.3);
     color: #2196f3;
   }
@@ -350,7 +414,7 @@ try {
 
   .page-desc {
     color: var(--text-secondary);
-    margin: 0 0 32px 0;
+    margin: 0 32px 0;
     font-size: 16px;
   }
 
@@ -407,7 +471,7 @@ try {
   .search-input:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
   .clear-search {
@@ -495,7 +559,7 @@ try {
   }
 
   .error {
-    color: #c62828;
+    color: #c628;
     background: #fee;
     border: 1px solid #f44336;
     border-radius: 8px;
@@ -594,7 +658,7 @@ try {
 
     .modal-content {
       margin: 10px;
-      width: calc(100% - 20px);
+      width: calc(10% - 20px);
       max-width: 350px;
     }
 
@@ -620,7 +684,7 @@ try {
       min-width: 60px;
     }
     }
-  
+    
     /* 操作按钮样式 */
     .action-buttons {
       display: flex;
@@ -783,9 +847,19 @@ try {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    
+    .group-checkbox {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .group-checkbox input[type="checkbox"] {
+      margin-right: 8px;
+    }
   </style>
 
-  <style is:global>
+ <style is:global>
     /* Global Toast baseline styles for dynamic toasts on this page */
     .toast {
       position: fixed;
@@ -841,12 +915,15 @@ try {
       position: fixed;
       top: 20px;
       right: 20px;
-      z-index: 999999;
+      z-index: 10;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 12px;
-      pointer-events: none;
+      /* `pointer-events: none;` 這個樣式會導致容器內所有元素都無法點擊 */
+      /* 由於 toast-close 按鈕已經設置了 pointer-events: auto; */
+      /* 這裡可以移除，或者確保其他交互元素不受影響 */
+      /* pointer-events: none; */ /* 暫時註釋掉，若有問題再考慮 */
     }
     .toast-container .toast {
       position: relative;
@@ -865,7 +942,7 @@ try {
 
 <script>
   // Import the required functions
-  import { createUser, deleteUser, resetUserPassword } from '../../api/workflows';
+  import { createUser, deleteUser, resetUserPassword, updateUserGroups, getUserDetails } from '../../api/workflows';
 
   // 辅助函数 - 使用 Toast 组件进行通知（支持堆叠）
   function ensureToastContainer(): HTMLElement {
@@ -886,12 +963,12 @@ try {
     toast.innerHTML = `
       <div class="toast-icon">
         ${type === 'success' ? `
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="20" height="20" viewBox="0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         ` : type === 'error' ? `
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 1 1-18 0 9 9 0 1 18 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         ` : type === 'warning' ? `
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -899,7 +976,7 @@ try {
           </svg>
         ` : `
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         `}
       </div>
@@ -975,16 +1052,16 @@ try {
           bValue = b.querySelector('td:first-child')?.textContent || '';
           break;
         case 'created_at':
-          aValue = new Date(a.querySelector('td:nth-child(5)')?.textContent || '').getTime();
-          bValue = new Date(b.querySelector('td:nth-child(5)')?.textContent || '').getTime();
+          aValue = new Date(a.querySelector('td:nth-child(3)')?.textContent || '').getTime();
+          bValue = new Date(b.querySelector('td:nth-child(3)')?.textContent || '').getTime();
           break;
         case 'last_login':
-          aValue = new Date(a.querySelector('td:nth-child(6)')?.textContent || '').getTime();
-          bValue = new Date(b.querySelector('td:nth-child(6)')?.textContent || '').getTime();
+          aValue = new Date(a.querySelector('td:nth-child(4)')?.textContent || '').getTime();
+          bValue = new Date(b.querySelector('td:nth-child(4)')?.textContent || '').getTime();
           break;
         case 'generation_count':
-          aValue = parseInt(a.querySelector('td:nth-child(7)')?.textContent || '0');
-          bValue = parseInt(b.querySelector('td:nth-child(7)')?.textContent || '0');
+          aValue = parseInt(a.querySelector('td:nth-child(5)')?.textContent || '0');
+          bValue = parseInt(b.querySelector('td:nth-child(5)')?.textContent || '0');
           break;
       }
 
@@ -1012,7 +1089,6 @@ try {
   }
 
   // 事件监听器
-  userSearchInput?.addEventListener('input', filterUsers);
   sortBySelect?.addEventListener('change', sortUsers);
   clearSearchBtn?.addEventListener('click', clearSearch);
 
@@ -1022,6 +1098,20 @@ try {
     clearTimeout(searchTimeout);
     searchTimeout = window.setTimeout(filterUsers, 300);
   });
+
+  // 确保模态框初始状态为隐藏
+  function hideAllModals() {
+    const modals = ['create-user-modal', 'reset-password-modal', 'edit-groups-modal', 'delete-user-modal'];
+    modals.forEach(modalId => {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('show');
+      }
+    });
+  }
+
+  // 初始化时隐藏所有模态框
+  hideAllModals();
 
   // 创建用户功能
 
@@ -1041,124 +1131,250 @@ try {
     if (createUserModal) createUserModal.classList.remove('show');
   }
 
-  createUserBtn?.addEventListener('click', showCreateUserModal);
-  cancelCreateBtn?.addEventListener('click', hideCreateUserModal);
+  if (createUserBtn) {
+    createUserBtn.addEventListener('click', showCreateUserModal);
+  }
+  
+  if (cancelCreateBtn) {
+    cancelCreateBtn.addEventListener('click', hideCreateUserModal);
+  }
 
-  createUserModal?.querySelector('.modal-close')?.addEventListener('click', hideCreateUserModal);
+  const modalCloseBtn = createUserModal?.querySelector('.modal-close');
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener('click', hideCreateUserModal);
+  }
 
   // 点击模态框外部关闭
-  createUserModal?.addEventListener('click', (e) => {
+  const closeCreateUserModalHandler = (e: Event) => {
     if (e.target === createUserModal) {
       hideCreateUserModal();
     }
-  });
+  };
+  
+  if (createUserModal) {
+    createUserModal.addEventListener('click', closeCreateUserModalHandler);
+  }
 
-  confirmCreateBtn?.addEventListener('click', async () => {
-    const username = (document.getElementById('new-username') as HTMLInputElement)?.value.trim();
-    const password = (document.getElementById('new-password') as HTMLInputElement)?.value;
-    const email = (document.getElementById('new-email') as HTMLInputElement)?.value.trim();
-    const role = (document.getElementById('new-role') as HTMLSelectElement)?.value;
+  if (confirmCreateBtn) {
+    confirmCreateBtn.addEventListener('click', async () => {
+      const username = (document.getElementById('new-username') as HTMLInputElement)?.value.trim();
+      const password = (document.getElementById('new-password') as HTMLInputElement)?.value;
+      const email = (document.getElementById('new-email') as HTMLInputElement)?.value.trim();
+      const role = (document.getElementById('new-role') as HTMLSelectElement)?.value;
 
-    if (!username || !password) {
-      showToast('用户名和密码不能为空', 'error');
-      return;
-    }
-
-    if (password.length < 6) {
-      showToast('密码长度至少为6位', 'error');
-      return;
-    }
-
-    try {
-      const result = await createUser({
-        username,
-        password,
-        email: email || `${username}@example.com`,
-        role
-      });
-
-      showToast('用户创建成功', 'success');
-      hideCreateUserModal();
-
-      // 刷新页面以显示新用户
-      setTimeout(() => {
-        location.reload();
-      }, 1000);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : '创建用户失败';
-      showToast(`创建失败: ${errorMessage}`, 'error');
-    }
-  });
-
-  // 删除用户功能
-  document.querySelectorAll('.delete-user-btn').forEach(button => {
-    button.addEventListener('click', async function(this: HTMLButtonElement) {
-      const userId = this.getAttribute('data-user-id');
-      const username = this.getAttribute('data-username');
-
-      if (!userId || !username) return;
-
-      // 更新删除模态框的内容
-      const deleteMessage = document.getElementById('delete-user-message');
-      if (deleteMessage) {
-        deleteMessage.textContent = `确定要删除用户 "${username}" 吗？此操作不可撤销。`;
+      if (!username || !password) {
+        showToast('用户名和密码不能为空', 'error');
+        return;
       }
 
-      const deleteModal = document.getElementById('delete-user-modal');
-      deleteModal?.classList.add('show');
+      if (password.length < 6) {
+        showToast('密码长度至少为6位', 'error');
+        return;
+      }
 
-      // 设置确认删除按钮的事件
-      const confirmDeleteBtn = document.getElementById('confirm-delete');
-      const cancelDeleteBtn = document.getElementById('cancel-delete');
+      try {
+        // 獲取選中的身分組
+        const selectedGroups = Array.from(
+          document.querySelectorAll('#groups-checkboxes input[type="checkbox"]:checked')
+        ).map(cb => (cb as HTMLInputElement).value);
+        
+        const userData = {
+          username,
+          password,
+          email: email || `${username}@example.com`,
+          role,
+          groups: selectedGroups
+        };
 
-      const handleConfirm = async () => {
-        try {
-          await deleteUser(userId);
-          showToast('用户删除成功', 'success');
-          deleteModal?.classList.remove('show');
+        const result = await createUser(userData);
 
-          // 从表格中移除用户行
-          const userRow = document.querySelector(`.user-row[data-user-id="${userId}"]`);
-          userRow?.remove();
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : '删除用户失败';
-          showToast(`删除失败: ${errorMessage}`, 'error');
+        showToast('用户创建成功', 'success');
+        hideCreateUserModal();
+
+        // 刷新页面以显示新用户
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : '创建用户失败';
+        showToast(`创建失败: ${errorMessage}`, 'error');
+      }
+    });
+  }
+
+  // 删除用户功能
+    document.querySelectorAll('.delete-user-btn').forEach(button => {
+      button.addEventListener('click', async function(e: Event) {
+        const target = e.target as HTMLButtonElement;
+        console.log('Delete button clicked for user:', target.getAttribute('data-user-id'));
+        // e.preventDefault();
+        // e.stopPropagation();
+  
+        const userId = target.getAttribute('data-user-id');
+        const username = target.getAttribute('data-username');
+  
+        if (!userId || !username) return;
+  
+        hideAllModals(); // 隐藏所有模态框
+  
+        // 更新删除模态框的内容
+        const deleteMessage = document.getElementById('delete-user-message');
+        if (deleteMessage) {
+          deleteMessage.textContent = `确定要删除用户 "${username}" 吗？此操作不可撤销。`;
         }
-      };
-
-      const handleCancel = () => {
-        deleteModal?.classList.remove('show');
-      };
-
-      // 移除之前的事件监听器
-      confirmDeleteBtn?.removeEventListener('click', handleConfirm);
-      cancelDeleteBtn?.removeEventListener('click', handleCancel);
-
-      // 添加新的事件监听器
-      confirmDeleteBtn?.addEventListener('click', handleConfirm);
-      cancelDeleteBtn?.addEventListener('click', handleCancel);
-
-      // 关闭按钮
-      deleteModal?.querySelector('.modal-close')?.addEventListener('click', handleCancel);
-
-      // 点击模态框外部关闭
-      deleteModal?.addEventListener('click', (e) => {
-        if (e.target === deleteModal) {
-          handleCancel();
+  
+        const deleteModal = document.getElementById('delete-user-modal');
+        deleteModal?.classList.add('show');
+  
+        const confirmDeleteBtn = document.getElementById('confirm-delete');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+  
+        // 移除之前的事件监听器（如果存在）
+        const handleConfirm = async (userId: string) => {
+          try {
+            await deleteUser(userId);
+            showToast('用户删除成功', 'success');
+            deleteModal?.classList.remove('show');
+            const userRow = document.querySelector(`.user-row[data-user-id="${userId}"]`);
+            userRow?.remove();
+          } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : '删除用户失败';
+            showToast(`删除失败: ${errorMessage}`, 'error');
+          }
+        };
+  
+        const handleCancel = () => {
+          deleteModal?.classList.remove('show');
+        };
+  
+        // 移除之前的事件监听器
+        if (confirmDeleteBtn) {
+          confirmDeleteBtn.removeEventListener('click', () => handleConfirm(userId));
+          confirmDeleteBtn.addEventListener('click', () => handleConfirm(userId));
+        }
+        
+        if (cancelDeleteBtn) {
+          cancelDeleteBtn.removeEventListener('click', handleCancel);
+          cancelDeleteBtn.addEventListener('click', handleCancel);
+        }
+        
+        const modalCloseBtn = deleteModal?.querySelector('.modal-close');
+        if (modalCloseBtn) {
+          modalCloseBtn.removeEventListener('click', handleCancel);
+          modalCloseBtn.addEventListener('click', handleCancel);
+        }
+  
+        const closeDeleteModalHandler = (e: MouseEvent) => {
+          if (e.target === deleteModal) {
+            handleCancel();
+          }
+        };
+        
+        if (deleteModal) {
+          deleteModal.removeEventListener('click', closeDeleteModalHandler);
+          deleteModal.addEventListener('click', closeDeleteModalHandler);
         }
       });
     });
-  });
+
+  // 编辑用户身分組功能
+    document.querySelectorAll('.edit-groups-btn').forEach(button => {
+      button.addEventListener('click', async function(e: Event) {
+        const target = e.target as HTMLButtonElement;
+        console.log('Edit groups button clicked for user:', target.getAttribute('data-user-id'));
+        // e.preventDefault();
+        // e.stopPropagation();
+  
+        const userId = target.getAttribute('data-user-id');
+        const username = target.getAttribute('data-username');
+  
+        if (!userId || !username) return;
+  
+        hideAllModals(); // 隐藏所有模态框
+  
+        const editMessage = document.getElementById('edit-groups-message');
+        if (editMessage) {
+          editMessage.textContent = `为用户 "${username}" 编辑身分組：`;
+        }
+  
+        const editModal = document.getElementById('edit-groups-modal');
+        editModal?.classList.add('show');
+  
+        document.querySelectorAll('#edit-groups-checkboxes input[type="checkbox"]').forEach(checkbox => {
+          (checkbox as HTMLInputElement).checked = false;
+        });
+  
+        try {
+          const user = await getUserDetails(userId);
+          if (user.groups && user.groups.length > 0) {
+            user.groups.forEach(groupId => {
+              const checkbox = document.getElementById(`edit-group-${groupId}`) as HTMLInputElement;
+              if (checkbox) {
+                checkbox.checked = true;
+              }
+            });
+          }
+        } catch (error) {
+          console.error('获取用户信息失败:', error);
+        }
+  
+        const confirmEditGroupsBtn = document.getElementById('confirm-edit-groups');
+        const cancelEditGroupsBtn = document.getElementById('cancel-edit-groups');
+  
+        const handleConfirm = async (userId: string) => {
+          const selectedGroups = Array.from(
+            document.querySelectorAll('#edit-groups-checkboxes input[type="checkbox"]:checked')
+          ).map(cb => (cb as HTMLInputElement).value);
+  
+          try {
+            await updateUserGroups(userId, selectedGroups);
+            showToast('身分組更新成功', 'success');
+            editModal?.classList.remove('show');
+          } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : '更新身分組失败';
+            showToast(`更新失败: ${errorMessage}`, 'error');
+          }
+        };
+  
+        const handleCancel = () => {
+          editModal?.classList.remove('show');
+        };
+  
+        if (confirmEditGroupsBtn) {
+          confirmEditGroupsBtn.removeEventListener('click', () => handleConfirm(userId));
+          confirmEditGroupsBtn.addEventListener('click', () => handleConfirm(userId));
+        }
+        if (cancelEditGroupsBtn) {
+          cancelEditGroupsBtn.removeEventListener('click', handleCancel);
+          cancelEditGroupsBtn.addEventListener('click', handleCancel);
+        }
+  
+        editModal?.querySelector('.modal-close')?.addEventListener('click', handleCancel);
+        const closeEditModalHandler = (e: MouseEvent) => {
+          if (e.target === editModal) {
+            handleCancel();
+          }
+        };
+        if (editModal) {
+          editModal.addEventListener('click', closeEditModalHandler);
+        }
+      });
+   });
 
   // 重置密码功能
   document.querySelectorAll('.reset-password-btn').forEach(button => {
-    button.addEventListener('click', async function(this: HTMLButtonElement) {
-      const userId = this.getAttribute('data-user-id');
-      const username = this.getAttribute('data-username');
+    button.addEventListener('click', async function(e: Event) {
+      // e.preventDefault();
+      // e.stopPropagation();
+
+      const target = e.target as HTMLButtonElement;
+      const userId = target.getAttribute('data-user-id');
+      const username = target.getAttribute('data-username');
 
       if (!userId || !username) return;
 
-      // 更新重置密码模态框的内容
+      hideAllModals(); // 隐藏所有模态框
+
       const resetMessage = document.getElementById('reset-password-message');
       if (resetMessage) {
         resetMessage.textContent = `为用户 "${username}" 设置新密码：`;
@@ -1168,13 +1384,11 @@ try {
       const passwordInput = document.getElementById('new-password-input') as HTMLInputElement;
       resetModal?.classList.add('show');
 
-      // 清空密码输入框
       if (passwordInput) {
         passwordInput.value = '';
         passwordInput.focus();
       }
 
-      // 设置确认重置按钮的事件
       const confirmResetBtn = document.getElementById('confirm-reset');
       const cancelResetBtn = document.getElementById('cancel-reset');
 
@@ -1200,23 +1414,24 @@ try {
         resetModal?.classList.remove('show');
       };
 
-      // 移除之前的事件监听器
-      confirmResetBtn?.removeEventListener('click', handleConfirm);
-      cancelResetBtn?.removeEventListener('click', handleCancel);
+      if (confirmResetBtn) {
+        confirmResetBtn.removeEventListener('click', handleConfirm);
+        confirmResetBtn.addEventListener('click', handleConfirm);
+      }
+      if (cancelResetBtn) {
+        cancelResetBtn.removeEventListener('click', handleCancel);
+        cancelResetBtn.addEventListener('click', handleCancel);
+      }
 
-      // 添加新的事件监听器
-      confirmResetBtn?.addEventListener('click', handleConfirm);
-      cancelResetBtn?.addEventListener('click', handleCancel);
-
-      // 关闭按钮
       resetModal?.querySelector('.modal-close')?.addEventListener('click', handleCancel);
-
-      // 点击模态框外部关闭
-      resetModal?.addEventListener('click', (e) => {
+      const closeModalHandler = (e: MouseEvent) => {
         if (e.target === resetModal) {
           handleCancel();
         }
-      });
+      };
+      if (resetModal) {
+        resetModal.addEventListener('click', closeModalHandler);
+      }
     });
   });
 
