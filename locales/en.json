@@ -127,7 +127,20 @@
     "confirmNewPassword": "Confirm New Password",
     "resetPasswordButton": "Reset Password",
     "passwordResetSuccess": "Password reset successfully",
-    "passwordResetError": "Password reset failed"
+    "passwordResetError": "Password reset failed",
+    "username": "Username",
+    "loginMode": "Login Mode",
+    "roles": "Roles",
+    "groups": "Groups",
+    "permissions": "Permissions",
+    "noRoles": "No Roles",
+    "noGroups": "No Groups",
+    "noPermissions": "No Permissions",
+    "issuedAt": "Issued At",
+    "expiresAt": "Expires At",
+    "tokenExpiresIn": "Time Remaining",
+    "tokenExpired": "Expired",
+    "viewRaw": "View Raw Claims"
   },
   "history": {
     "title": "Generation History",

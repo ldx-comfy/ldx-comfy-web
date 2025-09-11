@@ -123,7 +123,20 @@
     "confirmNewPassword": "Confirmer le nouveau mot de passe",
     "resetPasswordButton": "Réinitialiser le mot de passe",
     "passwordResetSuccess": "Mot de passe réinitialisé avec succès",
-    "passwordResetError": "Échec de la réinitialisation du mot de passe"
+    "passwordResetError": "Échec de la réinitialisation du mot de passe",
+    "username": "Nom d'utilisateur",
+    "loginMode": "Mode de connexion",
+    "roles": "Rôles",
+    "groups": "Groupes",
+    "permissions": "Autorisations",
+    "noRoles": "Aucun rôle",
+    "noGroups": "Aucun groupe",
+    "noPermissions": "Aucune autorisation",
+    "issuedAt": "Émis le",
+    "expiresAt": "Expire le",
+    "tokenExpiresIn": "Temps restant",
+    "tokenExpired": "Expiré",
+    "viewRaw": "Voir les claims bruts"
   },
   "history": {
     "title": "Historique de Génération",

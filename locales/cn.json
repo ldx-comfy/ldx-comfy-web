@@ -164,7 +164,20 @@
     "confirmNewPassword": "确认新密码",
     "resetPasswordButton": "重置密码",
     "passwordResetSuccess": "密码重置成功",
-    "passwordResetError": "密码重置失败"
+    "passwordResetError": "密码重置失败",
+    "username": "用户名",
+    "loginMode": "登录方式",
+    "roles": "角色",
+    "groups": "群组",
+    "permissions": "权限",
+    "noRoles": "无角色",
+    "noGroups": "无群组",
+    "noPermissions": "无权限",
+    "issuedAt": "签发时间",
+    "expiresAt": "失效时间",
+    "tokenExpiresIn": "剩余时间",
+    "tokenExpired": "已过期",
+    "viewRaw": "查看原始声明"
   },
   "history": {
     "title": "生成历史",

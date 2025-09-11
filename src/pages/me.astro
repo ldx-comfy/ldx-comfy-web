@@ -7,7 +7,6 @@ import { ensureMeSSR } from '../lib/auth/guard';
 import { getUserWorkflows, getUserGenerationHistory, resetOwnPassword } from '../api/workflows';
 import { toBackendAbsoluteUrl } from '../lib/api/client';
 
-import CanCmp from '../components/Can.astro';
 
 // i18n
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -22,8 +21,18 @@ if (guard.response) {
 }
 const me = guard.me!;
 
-// Fetch user workflows and history
-const userWorkflows = await getUserWorkflows({ cookies: cookieHeader || undefined });
+const tokenRemainingText = (() => {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const rem = (me.exp || 0) - nowSec;
+  if (rem <= 0) return t('me.tokenExpired') || '已过期';
+  const d = Math.floor(rem / 86400);
+  const h = Math.floor((rem % 86400) / 3600);
+  const m = Math.floor((rem % 3600) / 60);
+  return `${d > 0 ? d + '天 ' : ''}${h}时 ${m}分`;
+})();
+
+
+ // Fetch user history
 const userHistory = await getUserGenerationHistory({ cookies: cookieHeader || undefined });
 
 // Handle password reset form submission
@@ -64,21 +73,29 @@ if (Astro.request.method === 'POST') {
     
     <div class="section">
       <h2>{t('me.userInfo')}</h2>
-      <div class="card">
-        <pre class="json">{JSON.stringify(me, null, 2)}</pre>
+      <div class="card user-info-card">
+        <div class="user-main">
+          <div class="avatar" aria-hidden="true">
+            {((me?.sub && me.sub[0]) || '?').toUpperCase()}
+          </div>
+          <div class="user-meta">
+            <div class="user-row"><strong>{t('me.username') || '用户名'}:</strong> {me.sub}</div>
+            <div class="user-row"><strong>{t('me.loginMode') || '登录方式'}:</strong> {me.login_mode}</div>
+            <div class="user-row"><strong>{t('me.roles') || '角色'}:</strong> {(me.roles || []).length > 0 ? (me.roles || []).map((r) => <span class="badge">{r}</span>) : <span class="muted">{t('me.noRoles') || '无角色'}</span>}</div>
+            <div class="user-row"><strong>{t('me.groups') || '群组'}:</strong> {(me.groups || []).length > 0 ? (me.groups || []).join(', ') : <span class="muted">{t('me.noGroups') || '无群组'}</span>}</div>
+            <div class="user-row"><strong>{t('me.permissions') || '权限'}:</strong> {(me.permissions || []).length > 0 ? (me.permissions || []).join(', ') : <span class="muted">{t('me.noPermissions') || '无权限'}</span>}</div>
+          </div>
+        </div>
+
+        <div class="token-info">
+          <div><strong>{t('me.issuedAt') || '签发时间'}:</strong> {new Date((me.iat || 0) * 1000).toLocaleString(lang)}</div>
+          <div><strong>{t('me.expiresAt') || '失效时间'}:</strong> {new Date((me.exp || 0) * 1000).toLocaleString(lang)}</div>
+          <div><strong>{t('me.tokenExpiresIn') || '剩余'}:</strong> {tokenRemainingText}</div>
+        </div>
+
       </div>
     </div>
     
-    <div class="section">
-      <h2>{t('me.availableWorkflows')}</h2>
-      <div class="card">
-        <ul>
-          {userWorkflows.map((workflow) => (
-            <li><a href={`/wfs/${workflow}`}>{workflow}</a></li>
-          ))}
-        </ul>
-      </div>
-    </div>
     
     <div class="section">
       <h2>{t('history.title')}</h2>
@@ -353,15 +370,6 @@ if (Astro.request.method === 'POST') {
         </form>
       </div>
     
-    <div class="rbac-demo">
-      <h2>{t('me.rbacDemo')}</h2>
-      <p>{t('me.adminOnlyArea')}</p>
-      <CanCmp me={me} rolesAny={['admin']} elseText={t('me.noAdminPermission')}>
-        <div class="admin-only">
-          <strong>{t('me.adminOnlyTitle')}</strong> {t('me.adminOnlyContent')}
-        </div>
-      </CanCmp>
-    </div>
   </div>
   
   {/* Preview Modal */}
@@ -648,4 +656,67 @@ if (Astro.request.method === 'POST') {
     color: #ef4444;
     margin-bottom: 16px;
  }
+/* User info card styles */
+.user-info-card {
+  display: block;
+  gap: 12px;
+}
+.user-main {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  font-size: 20px;
+  flex: 0 0 56px;
+  border: 2px solid rgba(255,255,255,0.06);
+}
+.user-meta .user-row {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  margin-right: 6px;
+  background: var(--accent-color);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+.muted {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+.token-info {
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.raw-json summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.raw-json pre.json {
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  padding: 10px;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow: auto;
+}
 </style>

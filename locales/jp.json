@@ -123,7 +123,20 @@
     "confirmNewPassword": "新しいパスワードを確認",
     "resetPasswordButton": "パスワードをリセット",
     "passwordResetSuccess": "パスワードが正常にリセットされました",
-    "passwordResetError": "パスワードのリセットに失敗しました"
+    "passwordResetError": "パスワードのリセットに失敗しました",
+    "username": "ユーザー名",
+    "loginMode": "ログイン方法",
+    "roles": "ロール",
+    "groups": "グループ",
+    "permissions": "権限",
+    "noRoles": "ロールなし",
+    "noGroups": "グループなし",
+    "noPermissions": "権限なし",
+    "issuedAt": "発行時刻",
+    "expiresAt": "有効期限",
+    "tokenExpiresIn": "残り時間",
+    "tokenExpired": "期限切れ",
+    "viewRaw": "生のクレームを表示"
   },
   "history": {
     "title": "生成履歴",

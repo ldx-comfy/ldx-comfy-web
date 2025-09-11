@@ -123,7 +123,20 @@
     "confirmNewPassword": "確認新密碼",
     "resetPasswordButton": "重置密碼",
     "passwordResetSuccess": "密碼重置成功",
-    "passwordResetError": "密碼重置失敗"
+    "passwordResetError": "密碼重置失敗",
+    "username": "用戶名",
+    "loginMode": "登入方式",
+    "roles": "角色",
+    "groups": "群組",
+    "permissions": "權限",
+    "noRoles": "無角色",
+    "noGroups": "無群組",
+    "noPermissions": "無權限",
+    "issuedAt": "簽發時間",
+    "expiresAt": "失效時間",
+    "tokenExpiresIn": "剩餘時間",
+    "tokenExpired": "已過期",
+    "viewRaw": "查看原始聲明"
   },
   "history": {
     "title": "生成歷史",
