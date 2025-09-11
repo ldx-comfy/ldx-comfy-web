@@ -345,37 +345,40 @@ if (Astro.request.method === 'POST') {
 
     <div class="actions">
       <a class="btn" href="/logout?next=/me">{t('me.logout')}</a>
-      <a class="btn secondary" href="/">{t('me.backToHome')}</a>
+      <button type="button" class="btn secondary" onclick="openResetPasswordModal()">{t('me.resetPassword')}</button>
     </div>
 
-    <div class="section">
-      <h2>{t('me.resetPassword')}</h2>
-      <div class="card">
-        {resetMessage && <div class="success-message">{t('me.passwordResetSuccess')}</div>}
-        {resetError && <div class="error-message">{resetError}</div>}
-        <form method="post" class="password-reset-form">
-          <div class="form-group">
-            <label for="current_password">{t('me.currentPassword')}:</label>
-            <input type="password" id="current_password" name="current_password" required />
-          </div>
-          <div class="form-group">
-            <label for="new_password">{t('me.newPassword')}:</label>
-            <input type="password" id="new_password" name="new_password" required minlength="6" />
-          </div>
-          <div class="form-group">
-            <label for="confirm_password">{t('me.confirmNewPassword')}:</label>
-            <input type="password" id="confirm_password" name="confirm_password" required minlength="6" />
-          </div>
-          <button type="submit" class="btn">{t('me.resetPasswordButton')}</button>
-        </form>
-      </div>
-    
   </div>
   
   {/* Preview Modal */}
   <div id="preview-modal" class="preview-modal" style="display:none;">
     <span class="close" onclick="document.getElementById('preview-modal').style.display='none'">&times;</span>
     <img class="preview-modal-content" id="preview-image" />
+  </div>
+
+  {/* Reset Password Modal */}
+  <div id="reset-password-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="closeResetPasswordModal()">&times;</span>
+      <h2>{t('me.resetPassword')}</h2>
+      <div id="reset-message" class="success-message" style="display:none;"></div>
+      <div id="reset-error" class="error-message" style="display:none;"></div>
+      <form id="reset-password-form" class="password-reset-form">
+        <div class="form-group">
+          <label for="modal_current_password">{t('me.currentPassword')}:</label>
+          <input type="password" id="modal_current_password" name="current_password" required />
+        </div>
+        <div class="form-group">
+          <label for="modal_new_password">{t('me.newPassword')}:</label>
+          <input type="password" id="modal_new_password" name="new_password" required minlength="6" />
+        </div>
+        <div class="form-group">
+          <label for="modal_confirm_password">{t('me.confirmNewPassword')}:</label>
+          <input type="password" id="modal_confirm_password" name="confirm_password" required minlength="6" />
+        </div>
+        <button type="submit" class="btn">{t('me.resetPasswordButton')}</button>
+      </form>
+    </div>
   </div>
   
   <script>
@@ -412,6 +415,117 @@ if (Astro.request.method === 'POST') {
         modal.addEventListener('click', (e) => {
           if (e.target === modal || (e.target as HTMLElement).classList.contains('close')) {
             modal.style.display = 'none';
+          }
+        });
+      }
+
+      // Reset Password Modal Functions
+      (window as any).openResetPasswordModal = function() {
+        const modal = document.getElementById('reset-password-modal') as HTMLElement;
+        if (modal) {
+          modal.style.display = 'block';
+        }
+      };
+
+      (window as any).closeResetPasswordModal = function() {
+        const modal = document.getElementById('reset-password-modal') as HTMLElement;
+        if (modal) {
+          modal.style.display = 'none';
+          // Clear messages
+          const messageEl = document.getElementById('reset-message') as HTMLElement;
+          const errorEl = document.getElementById('reset-error') as HTMLElement;
+          if (messageEl) messageEl.style.display = 'none';
+          if (errorEl) errorEl.style.display = 'none';
+          // Clear form
+          const form = document.getElementById('reset-password-form') as HTMLFormElement;
+          if (form) form.reset();
+        }
+      };
+
+      // Handle form submission
+      const resetForm = document.getElementById('reset-password-form') as HTMLFormElement;
+      if (resetForm) {
+        resetForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData(resetForm);
+          const currentPassword = formData.get('current_password')?.toString() || '';
+          const newPassword = formData.get('new_password')?.toString() || '';
+          const confirmPassword = formData.get('confirm_password')?.toString() || '';
+
+          // Clear previous messages
+          const messageEl = document.getElementById('reset-message') as HTMLElement;
+          const errorEl = document.getElementById('reset-error') as HTMLElement;
+          if (messageEl) messageEl.style.display = 'none';
+          if (errorEl) errorEl.style.display = 'none';
+
+          // Validate
+          if (!currentPassword || !newPassword || !confirmPassword) {
+            if (errorEl) {
+              errorEl.textContent = '所有字段都是必填的';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            if (errorEl) {
+              errorEl.textContent = '新密码和确认密码不匹配';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+          if (newPassword.length < 6) {
+            if (errorEl) {
+              errorEl.textContent = '新密码长度至少为6位';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          try {
+            // Send request to reset password
+            const response = await fetch('/api/v1/auth/me/reset-password', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${document.cookie.split(';').find(c => c.trim().startsWith('auth_token='))?.split('=')[1] || ''}`,
+              },
+              body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+              }),
+            });
+
+            if (response.ok) {
+              if (messageEl) {
+                messageEl.textContent = '密码重置成功';
+                messageEl.style.display = 'block';
+              }
+              setTimeout(() => {
+                (window as any).closeResetPasswordModal();
+              }, 2000);
+            } else {
+              const error = await response.json();
+              if (errorEl) {
+                errorEl.textContent = error.message || '密码重置失败';
+                errorEl.style.display = 'block';
+              }
+            }
+          } catch (error) {
+            console.error('密码重置失败:', error);
+            if (errorEl) {
+              errorEl.textContent = '密码重置失败';
+              errorEl.style.display = 'block';
+            }
+          }
+        });
+      }
+
+      // Close modal when clicking outside
+      const resetModal = document.getElementById('reset-password-modal') as HTMLElement;
+      if (resetModal) {
+        resetModal.addEventListener('click', (e) => {
+          if (e.target === resetModal) {
+            (window as any).closeResetPasswordModal();
           }
         });
       }
@@ -467,6 +581,14 @@ if (Astro.request.method === 'POST') {
   .btn.secondary {
     background: transparent;
     color: var(--accent-color);
+  }
+  .btn.logout-btn {
+    background: #dc2626;
+    border-color: #dc2626;
+  }
+  .btn.logout-btn:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
   }
   .rbac-demo {
     margin-top: 12px;
@@ -605,7 +727,49 @@ if (Astro.request.method === 'POST') {
   .close:focus {
     color: #bbb;
   }
-  
+
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content {
+    background-color: var(--bg-secondary);
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    color: var(--text-primary);
+  }
+
+  .modal-content .close {
+    color: var(--text-secondary);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .modal-content .close:hover,
+  .modal-content .close:focus {
+    color: var(--text-primary);
+  }
+
+  .modal-content h2 {
+    margin-top: 0;
+    color: var(--text-primary);
+  }
+
   /* Password reset form styles */
   .password-reset-form {
     display: flex;
