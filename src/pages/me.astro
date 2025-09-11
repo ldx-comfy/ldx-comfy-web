@@ -111,9 +111,6 @@ if (Astro.request.method === 'POST') {
                 if (firstImage.startsWith('data:')) {
                   // Base64 data URL
                   imageUrl = firstImage;
-                } else if (firstImage.startsWith('/comfy_out_image/')) {
-                  // File path with prefix
-                  imageUrl = toBackendAbsoluteUrl(firstImage);
                 } else {
                   // File path without prefix
                   imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${firstImage}`);

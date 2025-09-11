@@ -146,7 +146,7 @@ if (Astro.request.method === 'POST') {
                         imageUrl = imgStr;
                       } else {
                         // File path - construct full URL
-                        imageUrl = toBackendAbsoluteUrl(imgStr);
+                        imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${imgStr}`);
                       }
 
                       return (

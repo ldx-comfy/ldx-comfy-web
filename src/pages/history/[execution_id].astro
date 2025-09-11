@@ -38,7 +38,15 @@ try {
 
 <Layout title={t('history.detail.title')}>
   <div class="history-detail-page">
-    <h1 class="title">{t('history.detail.title')}</h1>
+    <div class="history-header">
+      <a href="/me" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {t('history.detail.backToHistory')}
+      </a>
+      <h1 class="history-title">{t('history.detail.title')}</h1>
+    </div>
     
     {error ? (
       <div class="error-section">
@@ -113,9 +121,6 @@ try {
                   if (image.startsWith('data:')) {
                     // Base64 data URL
                     imageUrl = image;
-                  } else if (image.startsWith('/comfy_out_image/')) {
-                    // File path with prefix
-                    imageUrl = toBackendAbsoluteUrl(image);
                   } else {
                     // File path without prefix
                     imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${image}`);
@@ -247,20 +252,54 @@ try {
 
 <style>
   .history-detail-page {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
-  .title {
-    margin: 0 0 8px 0;
-    font-size: 24px;
+
+  .history-header {
+    margin-bottom: 2rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    transition: color 0.2s ease;
+    margin-bottom: 1rem;
+  }
+
+  .back-link:hover {
+    color: var(--accent-color);
+  }
+
+  .back-link svg {
+    stroke: currentColor;
+  }
+
+  .history-title {
+    font-size: 2.5rem;
+    font-weight: 700;
     color: var(--text-primary);
+    margin: 0;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px var(--shadow-light);
   }
   .info-grid {
     display: grid;
@@ -446,5 +485,68 @@ try {
   .close:hover,
   .close:focus {
     color: #bbb;
+  }
+
+  /* Tablet and mobile responsive adjustments */
+  @media (max-width: 1024px) {
+    .history-detail-page {
+      padding: 1.5rem;
+    }
+
+    .history-title {
+      font-size: 2rem;
+    }
+
+    .card {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .history-detail-page {
+      padding: 1rem;
+    }
+
+    .history-title {
+      font-size: 1.75rem;
+    }
+
+    .card {
+      padding: 1rem;
+    }
+
+    .images-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .image-result-container {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .details-container {
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .history-title {
+      font-size: 1.5rem;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .image-container {
+      height: 250px;
+    }
+
+    .prompt-box,
+    .parameters-box {
+      padding: 10px;
+      font-size: 0.85rem;
+    }
   }
 </style>
