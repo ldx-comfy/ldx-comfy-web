@@ -30,7 +30,14 @@ const me = guard.me!;
 
 // Get execution ID from URL parameters and decode it
 const { execution_id: encoded_execution_id } = Astro.params;
-const execution_id = encoded_execution_id ? decodeURIComponent(encoded_execution_id) : '';
+let execution_id = '';
+if (encoded_execution_id) {
+  try {
+    execution_id = decodeURIComponent(String(encoded_execution_id));
+  } catch {
+    execution_id = String(encoded_execution_id);
+  }
+}
 
 let workflowParams: any[] = [];
 let loading = true;
@@ -167,6 +174,7 @@ if (Astro.request.method === 'POST') {
                     {executionImages.map((img: string) => {
                       let imageUrl;
                       const imgStr = String(img);
+                      const isData = imgStr.startsWith('data:');
                       if (imgStr.startsWith('data:')) {
                         // Base64 data URL - ensure it's properly encoded
                         imageUrl = imgStr;
@@ -180,7 +188,7 @@ if (Astro.request.method === 'POST') {
 
                       return (
                         <a
-                          href={imageUrl}
+                          href={isData ? "javascript:void(0)" : imageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
