@@ -22,9 +22,10 @@ interface Props {
   apiUrlTwo: string;
   initialValues?: Record<string, any>; // 新增：用于导入历史值的对象
   showExecuteButton?: boolean; // 新增：控制是否显示执行按钮
+  readOnly?: boolean; // 新增：只读模式，禁用所有编辑交互
 }
 
-const { params = [], workflowId, executionResult, executionError, apiUrlTwo, initialValues = {}, showExecuteButton = true } = Astro.props;
+const { params = [], workflowId, executionResult, executionError, apiUrlTwo, initialValues = {}, showExecuteButton = true, readOnly = false } = Astro.props;
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -37,7 +38,7 @@ const apiUrlTwoValue = API_URL_TWO;
 <!-- Image Editor Modal -->
 <ImageEditor />
 
-<div class="workflow-container">
+<div class="workflow-container" data-readonly={String(readOnly)} aria-disabled={readOnly ? 'true' : 'false'}>
   {
     params.map((param) => {
       const initialValue = initialValues[param.node_id] || param.value;
@@ -69,7 +70,7 @@ const apiUrlTwoValue = API_URL_TWO;
     })
   }
   
-  {showExecuteButton && (
+  {showExecuteButton && !readOnly && (
     <div class="workflow-controls">
       <form method="post" action="" id="workflow-form" data-api-url={apiUrlTwoValue}>
         <input type="hidden" name="workflowId" value={workflowId} />
@@ -393,7 +394,58 @@ const apiUrlTwoValue = API_URL_TWO;
   )}
 </div>
 
+<script>
+// 只读模式下禁用所有交互（组件内部实现，不依赖页面）
+(() => {
+  try {
+    const scriptEl = document.currentScript;
+    const container = (scriptEl && (scriptEl.parentElement || (scriptEl.closest && scriptEl.closest('.workflow-container')))) || document.querySelector('.workflow-container');
+    if (!container) return;
+    const isRO = String(container.getAttribute('data-readonly') || '') === 'true';
+    if (!isRO) return;
+
+    // 标准方式：inert
+    try {
+      container.setAttribute('inert', '');
+      container.setAttribute('aria-disabled', 'true');
+    } catch {}
+
+    // 后备：禁用常见控件
+    const controls = container.querySelectorAll('input, textarea, select, button, [contenteditable="true"], [role="switch"], [role="slider"], a');
+    controls.forEach(function(el) {
+      try {
+        if ('disabled' in el) { el.disabled = true; }
+      } catch {}
+      try {
+        if (el && el.getAttribute && el.getAttribute('contenteditable') === 'true') el.setAttribute('contenteditable', 'false');
+        if (el && el.setAttribute) {
+          el.setAttribute('tabindex', '-1');
+          el.setAttribute('aria-disabled', 'true');
+          if ((el as any).tagName === 'A') el.setAttribute('href', 'javascript:void(0)');
+        }
+      } catch {}
+    });
+
+    // 捕获并阻止交互事件（包括拖拽、点击、键盘等）
+    const stop = function(e: Event) { if (e && e.preventDefault) e.preventDefault(); if (e && e.stopPropagation) e.stopPropagation(); };
+    ['click','dblclick','mousedown','mouseup','mouseover','mouseenter','mouseleave','keydown','keyup','keypress','touchstart','touchend','touchmove','dragstart','drop','contextmenu'].forEach(function(evt) {
+      container.addEventListener(evt, stop, true);
+    });
+  } catch (err) {
+    try { console.error('[DynamicWorkflow][readOnly] disable failed:', err); } catch {}
+  }
+})();
+</script>
+
 <style>
+  /* 只读模式样式：屏蔽指针与选择 */
+  .workflow-container[data-readonly="true"] {
+    pointer-events: none;
+    user-select: none;
+  }
+  .workflow-container[data-readonly="true"] .execute-btn {
+    display: none;
+  }
   .workflow-container {
     display: flex;
     flex-direction: column;
