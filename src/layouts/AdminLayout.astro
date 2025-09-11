@@ -1,6 +1,7 @@
 ---
 import AdminSidebar from '../components/AdminSidebar.astro';
 import { ensureMeSSR } from '../lib/auth/guard';
+import PermissionGuard from '../components/PermissionGuard.astro';
 
 // Get user info for sidebar
 const cookieHeader = Astro.request.headers.get('cookie');
@@ -48,7 +49,9 @@ const lang = 'zh-CN';
 		<div class="admin-layout">
 			<AdminSidebar me={me} />
 			<main class="admin-main">
-				<slot />
+			    <PermissionGuard me={me} permissionsAll={['admin:access']} elseText="您沒有訪問管理面板的權限。" cookieHeader={cookieHeader}>
+			   <slot />
+			    </PermissionGuard>
 			</main>
 		</div>
 	</body>

@@ -7,20 +7,23 @@ interface Props {
   permissionsAny?: string[];
   permissionsAll?: string[];
   elseText?: string;
+  cookieHeader?: string | null; // Add cookieHeader to Props
 }
 
 const {
   me = null,
   permissionsAny = [],
   permissionsAll = [],
-  elseText = ''
+  elseText = '',
+  cookieHeader = null // Get cookieHeader from props
 } = Astro.props as Props;
 
 // 獲取當前用戶的權限
 let userPermissions: string[] = [];
 try {
   if (me) {
-    const perms = await getMyPermissions();
+    // Pass cookieHeader as ApiContext for SSR
+    const perms = await getMyPermissions({ cookies: cookieHeader || undefined });
     userPermissions = perms.map(p => p.id);
  }
 } catch (error) {
