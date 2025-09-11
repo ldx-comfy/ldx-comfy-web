@@ -327,12 +327,12 @@ export async function getAllUsers(ctx?: ApiContext): Promise<User[]> {
 
 // 更新用户角色
 export async function updateUserRole(userId: string, role: string, ctx?: ApiContext): Promise<{ message: string }> {
-  return apiPost<{ message: string }>(`/admin/users/${userId}/role`, { role }, ctx);
+  return apiFetch<{ message: string }>(`/admin/users/${userId}/role`, { method: 'PUT', body: { role }, ctx });
 }
 
 // 更新用户状态
 export async function updateUserStatus(userId: string, status: string, ctx?: ApiContext): Promise<{ message: string }> {
-  return apiPost<{ message: string }>(`/admin/users/${userId}/status`, { status }, ctx);
+  return apiFetch<{ message: string }>(`/admin/users/${userId}/status`, { method: 'PUT', body: { status }, ctx });
 }
 
 // 获取系统统计信息
@@ -456,7 +456,7 @@ export async function getUserDetails(userId: string, ctx?: ApiContext): Promise<
 
 // 更新用户身分組
 export async function updateUserGroups(userId: string, groups: string[], ctx?: ApiContext): Promise<{ message: string }> {
-  return apiPost<{ message: string }>(`/admin/users/${userId}/groups`, { groups }, ctx);
+  return apiFetch<{ message: string }>(`/admin/users/${userId}/groups`, { method: 'PUT', body: { groups }, ctx });
 }
 
 // 身分組管理API函數
@@ -484,7 +484,7 @@ export async function createGroup(groupData: CreateGroupData, ctx?: ApiContext):
 
 // 更新身分組（僅管理員）
 export async function updateGroup(groupId: string, groupData: UpdateGroupData, ctx?: ApiContext): Promise<Group> {
-  return apiPost<Group>(`/admin/groups/${groupId}`, groupData, ctx);
+  return apiFetch<Group>(`/admin/groups/${groupId}`, { method: 'PUT', body: groupData, ctx });
 }
 
 // 刪除身分組（僅管理員）
