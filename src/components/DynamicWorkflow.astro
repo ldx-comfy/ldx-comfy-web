@@ -8,9 +8,10 @@ import { getTranslator } from '@gudupao/astro-i18n';
 import { API_URL_TWO } from '../config/env.ts';
 
 interface WorkflowParam {
- node_id: string;
+  node_id: string;
   title: string;
   class_type: string;
+  value?: any;
 }
 
 interface Props {
@@ -19,9 +20,11 @@ interface Props {
   executionResult?: any;
   executionError?: string | null;
   apiUrlTwo: string;
+  initialValues?: Record<string, any>; // 新增：用于导入历史值的对象
+  showExecuteButton?: boolean; // 新增：控制是否显示执行按钮
 }
 
-const { params = [], workflowId, executionResult, executionError, apiUrlTwo } = Astro.props;
+const { params = [], workflowId, executionResult, executionError, apiUrlTwo, initialValues = {}, showExecuteButton = true } = Astro.props;
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -36,51 +39,105 @@ const apiUrlTwoValue = API_URL_TWO;
 
 <div class="workflow-container">
   {
-    params.map((param) => (
-      <div class="component-wrapper" data-node-id={param.node_id} data-class-type={param.class_type}>
-        {(() => {
-           if (param.class_type === 'LoadImageOutput') {
-             return <ImageUploader title={param.title} />;
-           } else if (param.class_type === 'Text') {
-             return <PromptInput placeholder={param.title} />;
-           } else if (param.class_type === 'CLIPTextEncode' || /CLIPTextEncode/.test(param.class_type)) {
-             // Map CLIP text encode nodes to a text prompt input
-             return <PromptInput placeholder={param.title} />;
-           } else if (param.class_type === 'Switch any [Crystools]') {
-             return <ToggleWithText text={param.title} />;
-           } else {
-             return (
-               <div class="unknown-component">
-                 <p>{t('dynamicworkflow.unknownComponent')}: {param.class_type}</p>
-                 <p>{t('dynamicworkflow.nodeId')}: {param.node_id}</p>
-                 <p>{t('dynamicworkflow.title')}: {param.title}</p>
-               </div>
-             );
-           }
-         })()}
-      </div>
-    ))
+    params.map((param) => {
+      const initialValue = initialValues[param.node_id] || param.value;
+      return (
+        <div class="component-wrapper" data-node-id={param.node_id} data-class-type={param.class_type} data-initial-value={JSON.stringify(initialValue)}>
+          {(() => {
+             if (param.class_type === 'LoadImageOutput') {
+               return <ImageUploader title={param.title} initialImage={initialValue} />;
+             } else if (param.class_type === 'Text') {
+               return <PromptInput placeholder={param.title} initialValue={initialValue} />;
+             } else if (param.class_type === 'CLIPTextEncode' || /CLIPTextEncode/.test(param.class_type)) {
+               // Map CLIP text encode nodes to a text prompt input
+               return <PromptInput placeholder={param.title} initialValue={initialValue} />;
+             } else if (param.class_type === 'Switch any [Crystools]') {
+               return <ToggleWithText text={param.title} initialState={Boolean(initialValue)} />;
+             } else {
+               return (
+                 <div class="unknown-component">
+                   <p>{t('dynamicworkflow.unknownComponent')}: {param.class_type}</p>
+                   <p>{t('dynamicworkflow.nodeId')}: {param.node_id}</p>
+                   <p>{t('dynamicworkflow.title')}: {param.title}</p>
+                   {initialValue && <p>Initial Value: {JSON.stringify(initialValue)}</p>}
+                 </div>
+               );
+             }
+           })()}
+        </div>
+      );
+    })
   }
   
-  <div class="workflow-controls">
-    <form method="post" action="" id="workflow-form" data-api-url={apiUrlTwoValue}>
-      <input type="hidden" name="workflowId" value={workflowId} />
-      <input type="hidden" name="params" value={JSON.stringify(params)} />
-      <button
-        class="execute-btn"
-        type="submit"
-      >
-        {t('dynamicworkflow.execute')}
-      </button>
+  {showExecuteButton && (
+    <div class="workflow-controls">
+      <form method="post" action="" id="workflow-form" data-api-url={apiUrlTwoValue}>
+        <input type="hidden" name="workflowId" value={workflowId} />
+        <input type="hidden" name="params" value={JSON.stringify(params)} />
+        <button
+          class="execute-btn"
+          type="submit"
+        >
+          {t('dynamicworkflow.execute')}
+        </button>
 
       <script type="module">
         (() => {
           try {
             const form = document.getElementById('workflow-form');
             if (!form) return;
-            
+
             // Get API URL from data attribute
             const apiUrlTwo = form.getAttribute('data-api-url');
+
+            // Initialize form fields with initial values
+            const initializeFormFields = () => {
+              const wrappers = form.querySelectorAll('.component-wrapper');
+              wrappers.forEach((wrapEl) => {
+                const nodeId = wrapEl.getAttribute('data-node-id');
+                const classType = wrapEl.getAttribute('data-class-type');
+                const initialValueStr = wrapEl.getAttribute('data-initial-value');
+
+                if (!nodeId || !initialValueStr) return;
+
+                let initialValue;
+                try {
+                  initialValue = JSON.parse(initialValueStr);
+                } catch (e) {
+                  initialValue = initialValueStr;
+                }
+
+                if (classType === 'Text' || classType.includes('CLIPTextEncode')) {
+                  const ta = wrapEl.querySelector('textarea');
+                  if (ta && initialValue && !ta.value) {
+                    ta.value = String(initialValue);
+                  }
+                } else if (classType === 'Switch any [Crystools]') {
+                  const cb = wrapEl.querySelector('input[type="checkbox"]');
+                  if (cb && initialValue !== undefined) {
+                    cb.checked = Boolean(initialValue);
+                  }
+                } else if (classType === 'LoadImageOutput') {
+                  const img = wrapEl.querySelector('img.image-preview');
+                  if (img && initialValue && !img.src) {
+                    // Ensure the base64 data is properly handled
+                    try {
+                      img.src = initialValue;
+                      img.hidden = false;
+                      const editBtn = wrapEl.querySelector('.edit-btn');
+                      if (editBtn) editBtn.hidden = false;
+                      const uploadBox = wrapEl.closest('.upload-box');
+                      if (uploadBox) uploadBox.classList.add('preview-shown');
+                    } catch (e) {
+                      console.error('[DynamicWorkflow] Error setting image src:', e);
+                    }
+                  }
+                }
+              });
+            };
+
+            // Initialize fields on load
+            initializeFormFields();
 
             async function serializeParamsToHiddenInput() {
               try {
@@ -110,6 +167,12 @@ const apiUrlTwoValue = API_URL_TWO;
                     const fi = wrapEl.querySelector('input[type="file"]');
                     if (fi && fi.files && fi.files.length > 0) {
                       valueProvided = fi.files[0].name;
+                    } else {
+                      // Check if there's an initial image
+                      const img = wrapEl.querySelector('img.image-preview');
+                      if (img && img.src && !img.hidden) {
+                        valueProvided = img.src;
+                      }
                     }
                   }
 
@@ -313,7 +376,8 @@ const apiUrlTwoValue = API_URL_TWO;
       </script>
     </form>
   </div>
-  
+  )}
+
   {executionResult && (
     <div class="execution-result">
       <h3>{t('dynamicworkflow.result')}:</h3>

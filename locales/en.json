@@ -171,7 +171,9 @@
       "steps": "Steps",
       "cfgScale": "CFG Scale",
       "prompt": "Prompt",
-      "parameters": "Parameters"
+      "parameters": "Parameters",
+      "workflowVisualization": "Workflow Visualization",
+      "noWorkflowData": "No workflow data available"
     },
     "noImages": "No Images"
   },

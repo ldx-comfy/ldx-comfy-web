@@ -4,9 +4,10 @@ import { getTranslator } from '@gudupao/astro-i18n';
 
 interface Props {
   title?: string;
+  initialImage?: string;
 }
 
-const { title } = Astro.props;
+const { title, initialImage } = Astro.props;
 
 // Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
@@ -17,8 +18,8 @@ const t = getTranslator(lang);
     <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M17 8l-5-5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     <p>{title || t('imageuploader.uploadText')}</p>
   </div>
-  <img id="image-preview" class="image-preview" src="" alt="Image preview" hidden />
-  <button id="edit-btn" class="edit-btn" hidden>{t('imageuploader.editButton')}</button>
+  <img id="image-preview" class="image-preview" src={initialImage || ""} alt="Image preview" hidden={!initialImage} />
+  <button id="edit-btn" class="edit-btn" hidden={!initialImage}>{t('imageuploader.editButton')}</button>
   <input type="file" id="file-input" name="files" accept="image/*" hidden />
   <!-- Hidden element to store translated messages -->
   <div id="translations" style="display: none;"
@@ -94,12 +95,19 @@ const t = getTranslator(lang);
   }
 
   /* When preview is shown, hide content and make preview interactive */
-  .upload-box.preview-shown .upload-content {
+  .upload-box.preview-shown .upload-content,
+  .upload-box:has(.image-preview:not([hidden])) .upload-content {
     display: none;
   }
 
-  .upload-box.preview-shown .image-preview {
+  .upload-box.preview-shown .image-preview,
+  .upload-box:has(.image-preview:not([hidden])) .image-preview {
     z-index: 1; /* Bring preview to front */
+  }
+
+  .upload-box:has(.image-preview:not([hidden])) {
+    border-style: solid;
+    border-color: var(--accent-color);
   }
 
   .edit-btn {

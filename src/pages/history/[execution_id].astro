@@ -2,6 +2,8 @@
 export const prerender = false;
 
 import Layout from '../../layouts/Layout.astro';
+import DynamicWorkflow from '../../components/DynamicWorkflow.astro';
+import { getWorkflowParams, executeWorkflowWithForm } from '../../api/workflows';
 import { getTranslator } from '@gudupao/astro-i18n';
 import { ensureMeSSR } from '../../lib/auth/guard';
 import { getUserGenerationHistoryDetail } from '../../api/workflows';
@@ -9,9 +11,13 @@ import { toBackendAbsoluteUrl } from '../../lib/api/client';
 
 import CanCmp from '../../components/Can.astro';
 
-// i18n
+// Get language from params or cookie
 const lang = Astro.params.lang || Astro.cookies.get('lang')?.value || 'en';
 const t = getTranslator(lang);
+
+// Get API URL
+const API_ORIGIN = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:1145";
+const apiUrlTwo = API_ORIGIN.endsWith("/") ? API_ORIGIN.slice(0, -1) : API_ORIGIN;
 
 // Guard: require logged-in and fetch claims
 const cookieHeader = Astro.request.headers.get('cookie');
@@ -22,186 +28,202 @@ if (guard.response) {
 }
 const me = guard.me!;
 
-// Get execution ID from URL parameters
-const { execution_id } = Astro.params;
+// Get execution ID from URL parameters and decode it
+const { execution_id: encoded_execution_id } = Astro.params;
+const execution_id = encoded_execution_id ? decodeURIComponent(encoded_execution_id) : '';
 
-// Fetch user generation history detail
-let historyDetail: Record<string, any> | null = null;
-let error: { message?: string } | null = null;
-try {
-  historyDetail = await getUserGenerationHistoryDetail(execution_id as string, { cookies: cookieHeader || undefined });
-} catch (err: any) {
-  console.error('Failed to fetch history detail:', err);
-  error = { message: err.message || 'Unknown error' };
+let workflowParams: any[] = [];
+let loading = true;
+let error: string | null = null;
+let workflowTitle = `Execution ${execution_id}`;
+let executionResult: any = null;
+let executionImages: string[] | null = null;
+let executionError: string | null = null;
+let initialValues: Record<string, any> = {};
+
+// Validate execution ID
+if (!execution_id) {
+  error = 'Execution ID is required';
+  loading = false;
+} else {
+  console.log(`Loading execution: ${execution_id}`);
+  console.log(`Execution ID type: ${typeof execution_id}, length: ${execution_id.length}`);
+
+  try {
+    // Fetch user generation history detail
+    const historyDetail = await getUserGenerationHistoryDetail(execution_id as string, { cookies: cookieHeader || undefined });
+
+    // Extract workflow information from history detail
+    if (historyDetail && historyDetail.input_params && historyDetail.input_params.nodes) {
+      workflowParams = historyDetail.input_params.nodes;
+      executionImages = historyDetail.result?.images || null;
+      executionResult = historyDetail.result || null;
+
+      // Extract initial values from history data
+      historyDetail.input_params.nodes.forEach((node: any) => {
+        if (node.value !== undefined) {
+          initialValues[node.node_id] = node.value;
+        }
+      });
+    }
+
+    // Set a more user-friendly title
+    workflowTitle = `Execution ${execution_id}`;
+
+  } catch (err: unknown) {
+    console.error(`Error loading execution ${execution_id}:`, err);
+    error = (err as Error).message || `Failed to load execution: ${execution_id}`;
+  } finally {
+    loading = false;
+  }
+}
+
+// Handle form submission (if needed for re-execution)
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const workflowId = formData.get('workflowId') as string;
+
+    const paramsRaw = formData.get('params') as string;
+    console.log('[history] POST received. workflowId=%s paramsRaw.length=%d', workflowId, paramsRaw?.length ?? 0);
+
+    let params: any[] = [];
+    try {
+      params = JSON.parse(paramsRaw);
+    } catch (e) {
+      console.error('[history] Failed to parse params JSON:', e);
+      params = [];
+    }
+
+    // Prepare nodes data
+    const nodes = JSON.stringify(params.map((param: any) => ({
+      node_id: param.node_id,
+      title: param.title,
+      class_type: param.class_type
+    })));
+
+    try {
+      console.log('[history] Prepared nodes typeof=%s length=%d preview=%s', typeof nodes, nodes?.length ?? 0, String(nodes).slice(0, 300));
+    } catch {}
+
+    // Execute workflow
+    const response = await executeWorkflowWithForm(workflowId, nodes, { cookies: cookieHeader || undefined });
+    // Normalize response and collect images directly for frontend display
+    executionImages = (response as any)?.images ?? (response as any)?.result?.images ?? null;
+    executionResult = (response as any)?.result ?? response;
+  } catch (err: unknown) {
+    console.error('Error executing workflow:', err);
+    executionError = (err as Error).message || 'Failed to execute workflow';
+  }
 }
 ---
 
-<Layout title={t('history.detail.title')}>
-  <div class="history-detail-page">
-    <div class="history-header">
+<Layout>
+  <div class="workflow-page">
+    <div class="workflow-header">
       <a href="/me" class="back-link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         {t('history.detail.backToHistory')}
       </a>
-      <h1 class="history-title">{t('history.detail.title')}</h1>
+      <h1 class="workflow-title">{workflowTitle}</h1>
     </div>
-    
-    {error ? (
-      <div class="error-section">
-        <h2>{t('history.detail.error')}</h2>
-        <p>{error.message || t('history.detail.errorMessage')}</p>
-        <a class="btn" href="/me">{t('history.detail.backToHistory')}</a>
-      </div>
-    ) : historyDetail ? (
-      <div class="detail-section">
-        <div class="card">
-          <h2>{t('history.detail.information')}</h2>
-          <div class="info-grid">
-            <div class="info-item">
-              <strong>{t('history.detail.executionId')}:</strong>
-              <span>{historyDetail.execution_id}</span>
+
+    <div class="workflow-content">
+      {loading ? (
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>{t('history.detail.loading')}</p>
+        </div>
+      ) : error ? (
+        <div class="error-container">
+          <div class="error-icon">⚠️</div>
+          <h3>{t('history.detail.error')}</h3>
+          <p class="error-message">{error}</p>
+          <a href="/me" class="retry-link">{t('history.detail.backToHistory')}</a>
+        </div>
+      ) : (
+        <div class="two-column-layout">
+          <div class="left-column">
+            <div class="workflow-container">
+              <DynamicWorkflow
+                params={workflowParams}
+                workflowId={execution_id!}
+                executionResult={null}
+                executionError={null}
+                apiUrlTwo={apiUrlTwo}
+                initialValues={initialValues}
+                showExecuteButton={false}
+              />
             </div>
-            <div class="info-item">
-              <strong>{t('history.detail.workflowId')}:</strong>
-              <span>{historyDetail.workflow_id}</span>
-            </div>
-            <div class="info-item">
-              <strong>{t('history.detail.timestamp')}:</strong>
-              <span>{new Date(historyDetail.timestamp * 1000).toLocaleString(lang)}</span>
-            </div>
-            <div class="info-item">
-              <strong>{t('history.detail.userId')}:</strong>
-              <span>{historyDetail.user_id}</span>
+          </div>
+          <div class="right-column">
+            <div class="results-container">
+              {executionImages && executionImages.length > 0 && (
+                <div class="execution-result">
+                  <h3>{t('dynamicworkflow.result')}:</h3>
+                  <div>
+                    {executionImages.map((img: string) => {
+                      let imageUrl;
+                      const imgStr = String(img);
+                      if (imgStr.startsWith('data:')) {
+                        // Base64 data URL - ensure it's properly encoded
+                        imageUrl = imgStr;
+                      } else if (imgStr.startsWith('http')) {
+                        // HTTP URL
+                        imageUrl = imgStr;
+                      } else {
+                        // File path - construct full URL
+                        imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${imgStr}`);
+                      }
+
+                      return (
+                        <a
+                          href={imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img
+                            src={imageUrl}
+                            alt="Result image"
+                            loading="lazy"
+                            style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;"
+                            onerror="console.error('Image load error:', this.src)"
+                          />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {executionError && (
+                <div class="execution-error">
+                  <h3>{t('dynamicworkflow.error')}:</h3>
+                  <p>{executionError}</p>
+                </div>
+              )}
+
+              {!executionImages && executionResult && (
+                <div class="execution-result">
+                  <h3>{t('dynamicworkflow.result')}:</h3>
+                  <pre>{JSON.stringify(executionResult, null, 2)}</pre>
+                </div>
+              )}
+
+              {!executionImages && !executionResult && !executionError && (
+                <div class="no-results">
+                  <div class="no-results-icon">📊</div>
+                  <h3>{t('workflow.resultsWillAppearHere')}</h3>
+                  <p>{t('workflow.executeToSeeResults')}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-        
-        <div class="card">
-          <h2>{t('history.detail.inputParameters')}</h2>
-          {historyDetail.input_params ? (
-            <div class="input-params-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {
-                    Object.entries(historyDetail.input_params).map(([key, value]) => {
-                      return <tr>
-                        <td>{key}</td>
-                        <td>
-                          {typeof value === 'object' ?
-                          <pre class="json">{JSON.stringify(value, null, 2)}</pre> :
-                          String(value)}
-                        </td>
-                      </tr>;
-                    })
-                  }
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>No input parameters</p>
-          )}
-        </div>
-        
-        <div class="card">
-          <h2>{t('history.detail.result')}</h2>
-          {historyDetail.result && historyDetail.result.images && historyDetail.result.images.length > 0 ? (
-            <div class="images-grid">
-              {historyDetail.result.images.map((image: string, index: number) => {
-                // Handle both base64 data URLs and file paths
-                let imageUrl = null;
-                if (image) {
-                  if (image.startsWith('data:')) {
-                    // Base64 data URL
-                    imageUrl = image;
-                  } else {
-                    // File path without prefix
-                    imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${image}`);
-                  }
-                }
-                
-                // Extract prompt from input_params
-                let prompt = '';
-                // Extract other parameters like steps, cfg_scale, etc.
-                let steps = '';
-                let cfgScale = '';
-                
-                if (historyDetail.input_params && historyDetail.input_params.nodes) {
-                  const nodes = historyDetail.input_params.nodes;
-                  // Find the node with text input
-                  const textNode = nodes.find((node: any) => node.class_type === 'Text' || (node.class_type && node.class_type.includes('CLIPTextEncode')));
-                  if (textNode && textNode.value && textNode.value.text) {
-                    prompt = textNode.value.text;
-                  }
-                  
-                  // Find other parameters
-                  // This is a simplified example. You might need to adjust this based on the actual structure of your data.
-                  const stepsNode = nodes.find((node: any) => node.title === 'Steps');
-                  if (stepsNode && stepsNode.value) {
-                    steps = stepsNode.value;
-                  }
-                  
-                  const cfgScaleNode = nodes.find((node: any) => node.title === 'CFG Scale');
-                  if (cfgScaleNode && cfgScaleNode.value) {
-                    cfgScale = cfgScaleNode.value;
-                  }
-                }
-                
-                return (
-                  <div class="image-result-container">
-                    <div class="image-container">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={`${t('history.detail.outputImage')} ${index + 1}`}
-                          class="detail-image"
-                        />
-                      ) : (
-                        <div class="no-image">{t('history.noImage')}</div>
-                      )}
-                    </div>
-                    <div class="details-container">
-                      {prompt && (
-                        <div class="detail-item">
-                          <strong>{t('history.detail.prompt')}:</strong>
-                          <div class="prompt-box">{prompt}</div>
-                        </div>
-                      )}
-                      {(steps || cfgScale) && (
-                        <div class="detail-item">
-                          <strong>{t('history.detail.parameters')}:</strong>
-                          <div class="parameters-box">
-                            {steps && <div>{t('history.detail.steps')}: {steps}</div>}
-                            {cfgScale && <div>{t('history.detail.cfgScale')}: {cfgScale}</div>}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p>{t('history.noImages')}</p>
-          )}
-        </div>
-        
-        <div class="actions">
-          <a class="btn" href="/me">{t('history.detail.backToHistory')}</a>
-        </div>
-      </div>
-    ) : (
-      <div class="loading-section">
-        <p>{t('history.detail.loading')}</p>
-      </div>
-    )}
+      )}
+    </div>
   </div>
 </Layout>
 
@@ -215,29 +237,33 @@ try {
   {/* Client-side script to handle image preview */}
   {/* This script runs after the page is hydrated */}
   document.addEventListener('DOMContentLoaded', () => {
-    // Add click event listeners to all detail images
-    const images = document.querySelectorAll('.detail-image');
+    // Add click event listeners to all result images
+    const images = document.querySelectorAll('.execution-result img');
     images.forEach(img => {
       img.addEventListener('click', (e) => {
         const target = e.target as HTMLImageElement;
         const src = target.src;
-        
+
         if (src) {
-          // Set the source of the preview image
-          const previewImage = document.getElementById('preview-image') as HTMLImageElement;
-          if (previewImage) {
-            previewImage.src = src;
-          }
-          
-          // Show the preview modal
-          const modal = document.getElementById('preview-modal');
-          if (modal) {
-            modal.style.display = 'block';
+          try {
+            // Set the source of the preview image
+            const previewImage = document.getElementById('preview-image') as HTMLImageElement;
+            if (previewImage) {
+              previewImage.src = src;
+            }
+
+            // Show the preview modal
+            const modal = document.getElementById('preview-modal');
+            if (modal) {
+              modal.style.display = 'block';
+            }
+          } catch (error) {
+            console.error('Error handling image preview:', error);
           }
         }
       });
     });
-    
+
     // Add click event listener to close the modal when clicking on the close button or outside the image
     const modal = document.getElementById('preview-modal');
     if (modal) {
@@ -251,7 +277,7 @@ try {
 </script>
 
 <style>
-  .history-detail-page {
+  .workflow-page {
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
@@ -260,7 +286,7 @@ try {
     box-sizing: border-box;
   }
 
-  .history-header {
+  .workflow-header {
     margin-bottom: 2rem;
   }
 
@@ -284,7 +310,7 @@ try {
     stroke: currentColor;
   }
 
-  .history-title {
+  .workflow-title {
     font-size: 2.5rem;
     font-weight: 700;
     color: var(--text-primary);
@@ -294,259 +320,260 @@ try {
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  .card {
+
+  .workflow-content {
+    min-height: 400px;
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+  }
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top: 3px solid var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .loading-container p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
     background: var(--bg-secondary);
+    border-radius: 16px;
     border: 1px solid var(--border-color);
+  }
+
+  .error-icon {
+    font-size: 3rem;
+  }
+
+  .error-container h3 {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .error-message {
+    color: #d32f2f;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  .retry-link {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+  }
+
+  .retry-link:hover {
+    background: var(--accent-color);
+    color: white;
+  }
+
+  .two-column-layout {
+    display: grid;
+    grid-template-columns: minmax(400px, 500px) 1fr;
+    gap: 2rem;
+    align-items: start;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .left-column {
+    position: sticky;
+    top: 2rem;
+  }
+
+  .right-column {
+    min-height: 600px;
+  }
+
+  .workflow-container {
+    background: var(--bg-secondary);
     border-radius: 16px;
     padding: 2rem;
+    border: 1px solid var(--border-color);
     box-shadow: 0 4px 12px var(--shadow-light);
   }
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 12px;
-  }
-  .info-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .info-item strong {
-    color: var(--text-primary);
-  }
-  .info-item span {
-    color: var(--text-secondary);
-  }
-  .json {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    background: var(--bg-primary);
-    padding: 12px;
-    border-radius: 8px;
-    overflow-x: auto;
-  }
-  .input-params-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .input-params-table th,
-  .input-params-table td {
-    text-align: left;
-    padding: 8px;
-    border-bottom: 1px solid var(--border-color);
-  }
-  .input-params-table th {
-    background-color: var(--bg-primary);
-    font-weight: bold;
-  }
-  .images-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 30px;
-  }
-  .image-result-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-  .image-container {
-    width: 100%;
-    height: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    border-radius: 8px;
-    background: var(--bg-primary);
+
+  .results-container {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 2rem;
     border: 1px solid var(--border-color);
-  }
-  .detail-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  }
-  .details-container {
+    box-shadow: 0 4px 12px var(--shadow-light);
+    min-height: 400px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
-  .detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+
+  .execution-result {
+    flex: 1;
   }
-  .detail-item strong {
-    color: var(--text-primary);
+
+  .execution-result h3 {
+    font-size: 1.25rem;
     font-weight: 600;
-  }
-  .prompt-box {
-    padding: 12px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    font-size: 0.9rem;
     color: var(--text-primary);
-    word-break: break-word;
+    margin: 0 0 1rem 0;
+  }
+
+  .execution-result pre {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
     white-space: pre-wrap;
-    max-height: 150px;
-    overflow-y: auto;
-  }
-  .parameters-box {
-    padding: 12px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     color: var(--text-primary);
+    margin: 0;
+    max-width: 100%;
   }
-  .parameters-box > div {
-    margin-bottom: 5px;
+
+  .execution-error {
+    background: #fee;
+    border: 1px solid #f44336;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
   }
-  .parameters-box > div:last-child {
-    margin-bottom: 0;
+
+  .execution-error h3 {
+    color: #d32f2f;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
   }
-  .no-image {
-    width: 100%;
-    height: 100%;
+
+  .execution-error p {
+    color: #d32f2f;
+    margin: 0;
+  }
+
+  .no-results {
+    flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--text-secondary);
-    font-style: italic;
-  }
-  .actions {
-    display: flex;
-    gap: 10px;
-  }
-  .btn {
-    display: inline-block;
-    padding: 10px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    background: var(--accent-color);
-    color: #fff;
-    border: 1px solid var(--accent-color);
-  }
-  .btn.secondary {
-    background: transparent;
-    color: var(--accent-color);
-  }
-  .loading-section, .error-section {
     text-align: center;
-    padding: 40px 20px;
+    color: var(--text-secondary);
   }
-  .error-section p {
-    color: var(--error-color);
-    margin-bottom: 20px;
+
+  .no-results-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
   }
-  
-  /* Preview Modal Styles */
-  .preview-modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.9);
+
+  .no-results h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0 0 0.5rem 0;
   }
-  
-  .preview-modal-content {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-    max-height: 80%;
-    object-fit: contain;
-    animation-name: zoom;
-    animation-duration: 0.3s;
-  }
-  
-  @keyframes zoom {
-    from {transform: scale(0)}
-    to {transform: scale(1)}
-  }
-  
-  .close {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  
-  .close:hover,
-  .close:focus {
-    color: #bbb;
+
+  .no-results p {
+    margin: 0;
+    font-size: 0.9rem;
   }
 
   /* Tablet and mobile responsive adjustments */
   @media (max-width: 1024px) {
-    .history-detail-page {
+    .workflow-page {
       padding: 1.5rem;
     }
 
-    .history-title {
+    .workflow-title {
       font-size: 2rem;
     }
 
-    .card {
-      padding: 1.5rem;
+    .two-column-layout {
+      gap: 1.5rem;
     }
   }
 
   @media (max-width: 768px) {
-    .history-detail-page {
+    .workflow-page {
       padding: 1rem;
     }
 
-    .history-title {
+    .workflow-title {
       font-size: 1.75rem;
     }
 
-    .card {
-      padding: 1rem;
-    }
-
-    .images-grid {
+    .two-column-layout {
       grid-template-columns: 1fr;
-      gap: 20px;
+      gap: 1rem;
     }
 
-    .image-result-container {
-      flex-direction: column;
-      gap: 10px;
+    .left-column {
+      position: static;
     }
 
-    .details-container {
-      gap: 10px;
+    .workflow-container {
+      padding: 1.5rem;
+    }
+
+    .results-container {
+      padding: 1.5rem;
+      min-height: 300px;
     }
   }
 
   @media (max-width: 480px) {
-    .history-title {
+    .workflow-title {
       font-size: 1.5rem;
     }
 
-    .info-grid {
-      grid-template-columns: 1fr;
+    .workflow-container {
+      padding: 1rem;
     }
 
-    .image-container {
-      height: 250px;
+    .results-container {
+      padding: 1rem;
     }
 
-    .prompt-box,
-    .parameters-box {
-      padding: 10px;
-      font-size: 0.85rem;
+    .execution-result pre {
+      font-size: 0.8rem;
+      padding: 0.75rem;
+    }
+
+    .no-results-icon {
+      font-size: 2.5rem;
     }
   }
 </style>
