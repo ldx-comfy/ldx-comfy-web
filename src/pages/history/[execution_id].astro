@@ -47,6 +47,8 @@ let executionResult: any = null;
 let executionImages: string[] | null = null;
 let executionError: string | null = null;
 let initialValues: Record<string, any> = {};
+let workflowId: string | null = null;
+let timestamp: number | null = null;
 
 // Validate execution ID
 if (!execution_id) {
@@ -72,6 +74,22 @@ if (!execution_id) {
           initialValues[node.node_id] = node.value;
         }
       });
+    }
+
+    // Extract identifiers for display
+    if (historyDetail) {
+      try {
+        workflowId = (historyDetail as any).workflow_id ?? null;
+      } catch {}
+      try {
+        const tsVal = (historyDetail as any).timestamp as any;
+        if (tsVal !== undefined && tsVal !== null) {
+          const num = typeof tsVal === 'number' ? tsVal : Number(tsVal);
+          if (!Number.isNaN(num)) {
+            timestamp = num;
+          }
+        }
+      } catch {}
     }
 
     // Set a more user-friendly title
@@ -135,6 +153,24 @@ if (Astro.request.method === 'POST') {
         {t('history.detail.backToHistory')}
       </a>
       <h1 class="workflow-title">{workflowTitle}</h1>
+      {!loading && !error && (workflowId || timestamp) && (
+        <div class="info-card">
+          <div class="info-grid">
+            {workflowId && (
+              <div class="info-item">
+                <strong>{t('history.detail.workflowId')}:</strong>
+                <span>{workflowId}</span>
+              </div>
+            )}
+            {typeof timestamp === 'number' && (
+              <div class="info-item">
+                <strong>{t('history.detail.timestamp')}:</strong>
+                <span>{new Date(timestamp * 1000).toLocaleString('zh-CN')}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
 
     <div class="workflow-content">
@@ -406,6 +442,35 @@ if (Astro.request.method === 'POST') {
   .retry-link:hover {
     background: var(--accent-color);
     color: white;
+  }
+
+  .info-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .info-item strong {
+    color: var(--text-primary);
+  }
+
+  .info-item span {
+    color: var(--text-secondary);
+    word-break: break-all;
   }
 
   .two-column-layout {
