@@ -78,13 +78,67 @@ export function clearAuthCookies(cookies: CookiesWriter): void {
  */
 export function hasAnyRole(me: MeClaims | null | undefined, required: string[] = []): boolean {
   if (!me) return false;
+  
+  // 檢查用戶是否是admin，如果是admin直接通過所有角色檢查
+  if (me.sub === "admin") {
+    return true;
+  }
+  
+  // 從groups中解析角色
   const roles = new Set((me.roles || []).filter(Boolean));
+  
+  // 檢查用戶所屬的群組是否具有管理員級別的權限
+  const userGroups = me.groups || [];
+  const adminPermissionPatterns = ["admin:"];
+  
+  for (const groupId of userGroups) {
+    // 注意：在前端我們無法直接訪問後端的群組配置，
+    // 但我們可以檢查JWT token中是否包含admin:access權限
+    const permissions = me.permissions || [];
+    const hasAdminLevelPermissions = permissions.some((perm: string) =>
+      adminPermissionPatterns.some(pattern =>
+        pattern.endsWith(":") && perm.startsWith(pattern)
+      )
+    );
+    
+    if (hasAdminLevelPermissions && !roles.has("admin")) {
+      roles.add("admin");
+    }
+  }
+  
   return required.some((r) => roles.has(r));
 }
 
 export function hasAllRoles(me: MeClaims | null | undefined, required: string[] = []): boolean {
   if (!me) return false;
+  
+  // 檢查用戶是否是admin，如果是admin直接通過所有角色檢查
+  if (me.sub === "admin") {
+    return true;
+  }
+  
+  // 從groups中解析角色
   const roles = new Set((me.roles || []).filter(Boolean));
+  
+  // 檢查用戶所屬的群組是否具有管理員級別的權限
+  const userGroups = me.groups || [];
+  const adminPermissionPatterns = ["admin:"];
+  
+  for (const groupId of userGroups) {
+    // 注意：在前端我們無法直接訪問後端的群組配置，
+    // 但我們可以檢查JWT token中是否包含admin:access權限
+    const permissions = me.permissions || [];
+    const hasAdminLevelPermissions = permissions.some((perm: string) =>
+      adminPermissionPatterns.some(pattern =>
+        pattern.endsWith(":") && perm.startsWith(pattern)
+      )
+    );
+    
+    if (hasAdminLevelPermissions && !roles.has("admin")) {
+      roles.add("admin");
+    }
+  }
+  
   return required.every((r) => roles.has(r));
 }
 
