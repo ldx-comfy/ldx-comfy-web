@@ -185,6 +185,8 @@
     "save": "Save",
     "edit": "Edit",
     "delete": "Delete",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "insufficientPermissionToChangeSettings": "You do not have permission to change system settings.",
+    "settingsSavedSuccessfully": "Settings saved successfully!"
   }
 }

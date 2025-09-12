@@ -220,6 +220,8 @@
     "save": "保存",
     "edit": "编辑",
     "delete": "删除",
-    "confirm": "确认"
+    "confirm": "确认",
+    "insufficientPermissionToChangeSettings": "您沒有權限更改系統設置。",
+    "settingsSavedSuccessfully": "設置保存成功！"
   }
 }
