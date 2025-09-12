@@ -432,16 +432,6 @@ export async function resetUserPassword(userId: string, newPassword: string, ctx
 }
 
 // 重置自己的密码
-export async function resetOwnPassword(currentPassword: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
-  return apiFetch<{ message: string }>(`/admin/users/me/reset-password`, {
-    method: 'PUT',
-    body: {
-      current_password: currentPassword,
-      new_password: newPassword
-    },
-    ctx
-  });
-}
 
 // 获取用户详细信息
 export async function getUserDetails(userId: string, ctx?: ApiContext): Promise<User> {

@@ -2,7 +2,7 @@
  * Auth service: login (password/code), fetch current identity, and helpers.
  */
 
-import { apiGet, apiPost, type ApiContext } from '../api/client';
+import { apiGet, apiPost, apiFetch, type ApiContext } from '../api/client';
 
 export type TokenResponse = {
   access_token: string;
@@ -51,4 +51,15 @@ export async function getMe(ctx?: ApiContext): Promise<MeClaims> {
 // Optional: helper to verify admin access
 export async function pingAdmin(ctx?: ApiContext): Promise<{ ok: boolean; sub?: string }> {
   return apiGet<{ ok: boolean; sub?: string }>('/auth/admin/ping', ctx);
+}
+
+export async function resetOwnPassword(currentPassword: string, newPassword: string, ctx?: ApiContext): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/auth/me/reset-password`, { // 注意：這裡移除尾隨斜線以匹配後端改動
+    method: 'PUT',
+    body: {
+      current_password: currentPassword,
+      new_password: newPassword
+    },
+    ctx
+  });
 }

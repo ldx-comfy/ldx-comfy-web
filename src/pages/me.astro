@@ -4,7 +4,8 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import { getTranslator } from '@gudupao/astro-i18n';
 import { ensureMeSSR } from '../lib/auth/guard';
-import { getUserWorkflows, getUserGenerationHistory, resetOwnPassword } from '../api/workflows';
+import { getUserWorkflows, getUserGenerationHistory } from '../api/workflows';
+import { resetOwnPassword } from '../lib/auth/service';
 import { toBackendAbsoluteUrl } from '../lib/api/client';
 
 
@@ -41,27 +42,31 @@ let resetError = '';
 
 if (Astro.request.method === 'POST') {
   const formData = await Astro.request.formData();
-  const currentPassword = formData.get('current_password')?.toString() || '';
-  const newPassword = formData.get('new_password')?.toString() || '';
-  const confirmPassword = formData.get('confirm_password')?.toString() || '';
-  
-  // Validate passwords
-  if (!currentPassword || !newPassword || !confirmPassword) {
-    resetError = '所有字段都是必填的';
-  } else if (newPassword !== confirmPassword) {
-    resetError = '新密碼和確認密碼不匹配';
-  } else if (newPassword.length < 6) {
-    resetError = '新密碼長度至少為6位';
-  } else {
-    try {
-      // Reset password
-      await resetOwnPassword(currentPassword, newPassword, { cookies: cookieHeader || undefined });
-      resetMessage = '密碼重置成功';
-      resetError = '';
-    } catch (error) {
-      console.error('密碼重置失敗:', error);
-      resetError = error instanceof Error ? error.message : '密碼重置失敗';
-      resetMessage = '';
+  const method = formData.get('_method')?.toString(); // 讀取隱藏欄位 _method
+
+  if (method === 'PUT') {
+    const currentPassword = formData.get('current_password')?.toString() || '';
+    const newPassword = formData.get('new_password')?.toString() || '';
+    const confirmPassword = formData.get('confirm_password')?.toString() || '';
+    
+    // Validate passwords
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      resetError = '所有字段都是必填的';
+    } else if (newPassword !== confirmPassword) {
+      resetError = '新密碼和確認密碼不匹配';
+    } else if (newPassword.length < 6) {
+      resetError = '新密碼長度至少為6位';
+    } else {
+      try {
+        // Reset password
+        await resetOwnPassword(currentPassword, newPassword, { cookies: cookieHeader || undefined });
+        resetMessage = '密碼重置成功';
+        resetError = '';
+      } catch (error) {
+        console.error('密碼重置失敗:', error);
+        resetError = error instanceof Error ? error.message : '密碼重置失敗';
+        resetMessage = '';
+      }
     }
   }
 }
@@ -360,7 +365,8 @@ if (Astro.request.method === 'POST') {
       <h2>{t('me.resetPassword')}</h2>
       <div id="reset-message" class="success-message" style="display:none;"></div>
       <div id="reset-error" class="error-message" style="display:none;"></div>
-      <form id="reset-password-form" class="password-reset-form">
+      <form id="reset-password-form" class="password-reset-form" method="POST">
+        <input type="hidden" name="_method" value="PUT" />
         <div class="form-group">
           <label for="modal_current_password">{t('me.currentPassword')}:</label>
           <input type="password" id="modal_current_password" name="current_password" required />
@@ -479,18 +485,42 @@ if (Astro.request.method === 'POST') {
           }
 
           try {
-            // Send request to reset password
-            const response = await fetch('/api/v1/auth/me/reset-password', {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${document.cookie.split(';').find(c => c.trim().startsWith('auth_token='))?.split('=')[1] || ''}`,
-              },
-              body: JSON.stringify({
-                current_password: currentPassword,
-                new_password: newPassword,
-              }),
-            });
+           // Parse cookies using the same logic as api/client.ts
+           function parseCookie(cookieHeader: string | undefined | null): Record<string, string> {
+             const out: Record<string, string> = {};
+             if (!cookieHeader) return out;
+             const parts = cookieHeader.split(';');
+             for (const p of parts) {
+               const idx = p.indexOf('=');
+               if (idx === -1) continue;
+               const k = decodeURIComponent(p.slice(0, idx).trim());
+               const v = decodeURIComponent(p.slice(idx + 1).trim());
+               if (k) out[k] = v;
+             }
+             return out;
+           }
+
+           function getTokenFromCookies(cookies?: string): string | null {
+             const map = parseCookie(cookies || '');
+             return map['auth_token'] || map['auth_token_js'] || null;
+           }
+
+           // Get auth token from cookies
+           const cookies = document.cookie;
+           const token = getTokenFromCookies(cookies);
+           
+           // Send request to reset password
+           const response = await fetch('/api/v1/auth/me/reset-password', {
+             method: 'PUT',
+             headers: {
+               'Content-Type': 'application/json',
+               ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+             },
+             body: JSON.stringify({
+               current_password: currentPassword,
+               new_password: newPassword,
+             }),
+           });
 
             if (response.ok) {
               if (messageEl) {

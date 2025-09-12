@@ -8,7 +8,16 @@ export default defineConfig({
   output: 'server',
   vite: {
     plugins: [tailwindcss()],
-},
+    server: {
+      proxy: {
+        '/api': {
+          target: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:1145',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '/api'), // 將 /api 路徑轉發到後端
+        },
+      },
+    }
+  },
 
   integrations: [
     astroI18nPlugin({
