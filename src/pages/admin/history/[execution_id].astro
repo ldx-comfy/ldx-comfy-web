@@ -29,6 +29,86 @@ try {
   console.error('Failed to fetch history detail:', err);
   error = { message: err.message || 'Unknown error' };
 }
+
+if (historyDetail && historyDetail.result && historyDetail.result.images) {
+  // Debug: log the entire historyDetail structure
+  console.log('History Detail:', JSON.stringify(historyDetail, null, 2));
+  
+  // Extract prompt from Text node
+  let prompt = '';
+  // Extract refine quality from Switch any [Crystools] node
+  let refineQuality = false;
+  
+  // Debug: log the entire historyDetail structure
+  console.log('History Detail:', JSON.stringify(historyDetail, null, 2));
+  
+  // Try to extract prompt from result or other locations
+  if (historyDetail.result && historyDetail.result.prompt) {
+    prompt = historyDetail.result.prompt;
+    console.log('Prompt from result:', prompt);
+  }
+  
+  // Extract from input_params.nodes if available
+  if (historyDetail.input_params && historyDetail.input_params.nodes) {
+    const nodes = historyDetail.input_params.nodes;
+    console.log('Nodes:', nodes);
+    Object.values(nodes).forEach((node: any) => {
+      if (node.class_type && typeof node.class_type === 'string') {
+        console.log('Node class_type:', node.class_type);
+        // Extract prompt from Text node
+        if (node.class_type.includes('Text')) {
+          console.log('Text node value:', node.value);
+          console.log('Text node value type:', typeof node.value);
+          if (node.value && node.value.text !== undefined) {
+            prompt = node.value.text;
+            console.log('Extracted prompt:', prompt);
+          } else {
+            console.log('Text node value.text is undefined or null');
+            // If node.value exists but node.value.text doesn't, try using node.value directly
+            if (node.value && typeof node.value === 'string') {
+              prompt = node.value;
+              console.log('Extracted prompt from node.value directly:', prompt);
+            }
+          }
+        }
+        // Extract refine quality from Switch any [Crystools] node
+        if (node.class_type === 'Switch any [Crystools]') {
+          console.log('Switch node value:', node.value);
+          if (node.value !== undefined) {
+            refineQuality = !!node.value;
+            console.log('Extracted refineQuality:', refineQuality);
+          }
+        }
+      }
+    });
+  }
+  
+  // Extract other parameters
+  const steps = historyDetail.result.steps || '';
+  const cfgScale = historyDetail.result.cfg_scale || historyDetail.result.cfg || '';
+  
+  // Process images with prompt information
+  historyDetail.result.images = historyDetail.result.images.map((img: string) => {
+    // Extract original image if available
+    let originalImageBase64 = '';
+    if (historyDetail && historyDetail.input_params && historyDetail.input_params.nodes) {
+      const nodes = historyDetail.input_params.nodes;
+      const loadImageNode = nodes.find((node: any) => node.class_type === 'LoadImageOutput' && node.value && node.value.startsWith('data:image'));
+      if (loadImageNode && loadImageNode.value) {
+        originalImageBase64 = loadImageNode.value;
+      }
+    }
+    
+    return {
+      src: img,
+      refineQuality,
+      originalImageSrc: originalImageBase64,
+      prompt,
+      steps,
+      cfgScale
+    };
+  });
+}
 ---
 
 <Layout title="历史记录详情">
@@ -65,84 +145,29 @@ try {
           </div>
         </div>
         
-        <div class="card">
-          <h2>输入参数</h2>
-          {historyDetail.input_params ? (
-            <div class="input-params-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>键</th>
-                    <th>值</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {
-                    Object.entries(historyDetail.input_params).map(([key, value]) => {
-                      return <tr>
-                        <td>{key}</td>
-                        <td>
-                          {typeof value === 'object' ?
-                          <pre class="json">{JSON.stringify(value, null, 2)}</pre> :
-                          String(value)}
-                        </td>
-                      </tr>;
-                    })
-                  }
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>无输入参数</p>
-          )}
-        </div>
         
         <div class="card">
           <h2>结果</h2>
           {historyDetail.result && historyDetail.result.images && historyDetail.result.images.length > 0 ? (
             <div class="images-grid">
-              {historyDetail.result.images.map((image: string, index: number) => {
-                // Handle both base64 data URLs and file paths
+              {historyDetail.result.images.map((image: { src: string; refineQuality: boolean; originalImageSrc?: string; prompt: string; steps: string; cfgScale: string }, index: number) => {
                 let imageUrl = null;
-                if (image) {
-                  if (image.startsWith('data:')) {
-                    // Base64 data URL
-                    imageUrl = image;
-                  } else if (image.startsWith('/comfy_out_image/')) {
-                    // File path with prefix
-                    imageUrl = toBackendAbsoluteUrl(image);
+                if (image.src) {
+                  if (image.src.startsWith('data:')) {
+                    imageUrl = image.src;
+                  } else if (image.src.startsWith('/comfy_out_image/')) {
+                    imageUrl = toBackendAbsoluteUrl(image.src);
                   } else {
-                    // File path without prefix
-                    imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${image}`);
+                    imageUrl = toBackendAbsoluteUrl(`/comfy_out_image/${image.src}`);
                   }
                 }
 
-                // Extract prompt from input_params
-                let prompt = '';
-                // Extract other parameters like steps, cfg_scale, etc.
-                let steps = '';
-                let cfgScale = '';
+                // These variables are now part of the 'image' object due to preprocessing in the --- block
+                const { prompt, steps, cfgScale, refineQuality, originalImageSrc } = image;
 
-                if (historyDetail.input_params && historyDetail.input_params.nodes) {
-                  const nodes = historyDetail.input_params.nodes;
-                  // Find the node with text input
-                  const textNode = nodes.find((node: any) => node.class_type === 'Text' || (node.class_type && node.class_type.includes('CLIPTextEncode')));
-                  if (textNode && textNode.value && textNode.value.text) {
-                    prompt = textNode.value.text;
-                  }
+                // Debug: log prompt values
+                console.log('Prompt values:', { prompt });
 
-                  // Find other parameters
-                  // This is a simplified example. You might need to adjust this based on the actual structure of your data.
-                  const stepsNode = nodes.find((node: any) => node.title === 'Steps');
-                  if (stepsNode && stepsNode.value) {
-                    steps = stepsNode.value;
-                  }
-
-                  const cfgScaleNode = nodes.find((node: any) => node.title === 'CFG Scale');
-                  if (cfgScaleNode && cfgScaleNode.value) {
-                    cfgScale = cfgScaleNode.value;
-                  }
-                }
 
                 return (
                   <div class="image-result-container">
@@ -150,7 +175,7 @@ try {
                       {imageUrl ? (
                         <img
                           src={imageUrl}
-                          alt={`输出图片 ${index + 1}`}
+                          alt={`输出图片 ${index + 1} - ${prompt || '无提示词'}`}
                           class="detail-image"
                         />
                       ) : (
@@ -158,14 +183,20 @@ try {
                       )}
                     </div>
                     <div class="details-container">
-                      {prompt && (
-                        <div class="detail-item">
-                          <strong>提示词:</strong>
-                          <div class="prompt-box">{prompt}</div>
+                      {originalImageSrc && (
+                        <div class="detail-item new-detail-item">
+                          <strong>原图:</strong>
+                          <div class="original-image-box">
+                            <img src={originalImageSrc} alt="原图" class="original-image" />
+                          </div>
                         </div>
                       )}
+                      <div class="detail-item new-detail-item">
+                        <strong>提示词:</strong>
+                        <div class="prompt-box">{prompt || '（空）'}</div>
+                      </div>
                       {(steps || cfgScale) && (
-                        <div class="detail-item">
+                        <div class="detail-item new-detail-item">
                           <strong>参数:</strong>
                           <div class="parameters-box">
                             {steps && <div>步数: {steps}</div>}
@@ -173,6 +204,10 @@ try {
                           </div>
                         </div>
                       )}
+                      <div class="detail-item new-detail-item">
+                        <strong>调整画质:</strong>
+                        <span>{refineQuality ? '是' : '否'}</span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -325,35 +360,49 @@ try {
     object-fit: contain;
   }
   .details-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); /* Adjusted for better spacing */
     gap: 15px;
   }
   .detail-item {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    padding: 10px; /* Added padding for better visual separation */
+    background: var(--bg-primary); /* Consistent background */
+    border-radius: 8px; /* Rounded corners */
+    border: 1px solid var(--border-color); /* Consistent border */
   }
   .detail-item strong {
     color: var(--text-primary);
     font-weight: 600;
   }
   .prompt-box {
-    padding: 12px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
+    padding: 8px; /* Slightly less padding to contain within item's padding */
+    background-color: var(--bg-secondary); /* Lighter background for the box itself */
+    border-radius: 4px; /* Smaller rounded corners */
     border: 1px solid var(--border-color);
     font-size: 0.9rem;
     color: var(--text-primary);
     word-break: break-word;
     white-space: pre-wrap;
-    max-height: 150px;
-    overflow-y: auto;
+    max-height: 120px; /* Adjusted max-height */
+    overflow-y: auto; /* Re-enabled for long text to avoid stretching */
+  }
+  .prompt-entry {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .prompt-entry:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
   }
   .parameters-box {
-    padding: 12px;
-    background-color: var(--bg-primary);
-    border-radius: 6px;
+    padding: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
     border: 1px solid var(--border-color);
     font-size: 0.9rem;
     color: var(--text-primary);
@@ -376,7 +425,7 @@ try {
   .actions {
     display: flex;
     gap: 10px;
- }
+  }
   .btn {
     display: inline-block;
     padding: 10px 12px;
@@ -441,5 +490,27 @@ try {
   .close:hover,
   .close:focus {
     color: #bbb;
+  }
+
+  .new-detail-item {
+    margin-top: 0; /* Remove top margin as gap is handled by grid */
+  }
+
+  .original-image-box {
+    width: 100%;
+    height: 180px; /* Adjusted height for original image */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+  }
+
+  .original-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
 </style>
