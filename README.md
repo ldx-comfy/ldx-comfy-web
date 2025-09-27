@@ -1,4 +1,4 @@
-# yinghao-comfy-web
+# comfy-web
 
 ## 安装依赖
 ```bash
